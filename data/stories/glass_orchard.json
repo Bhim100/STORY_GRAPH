@@ -1,7 +1,537 @@
 {
-  "id": "glass_orchard",
+  "story_id": "glass_orchard",
   "title": "The Glass Orchard",
-  "description": "An aristocratic greenhouse estate murder mystery.",
-  "nodes": [],
-  "edges": []
+  "description": "An aristocratic greenhouse estate murder mystery running across 8 chapters.",
+  "characters": [
+    {
+      "id": "c_elias_thorne",
+      "story_id": "glass_orchard",
+      "name": "Elias Thorne",
+      "aliases": ["Elias", "Thorne", "Mr. Thorne"],
+      "role": "Estate owner, the victim",
+      "reveal_chapter": 1
+    },
+    {
+      "id": "c_edith_thorne",
+      "story_id": "glass_orchard",
+      "name": "Edith Thorne",
+      "aliases": ["Edith", "Thorne", "Miss Thorne"],
+      "role": "Elias's sister",
+      "reveal_chapter": 1
+    },
+    {
+      "id": "c_mara_voss",
+      "story_id": "glass_orchard",
+      "name": "Mara Voss",
+      "aliases": ["Mara", "Voss"],
+      "role": "Estate archivist",
+      "reveal_chapter": 1
+    },
+    {
+      "id": "c_ines_calloway",
+      "story_id": "glass_orchard",
+      "name": "Ines Calloway",
+      "aliases": ["Ines", "Calloway"],
+      "role": "Elias's niece and heir",
+      "reveal_chapter": 1
+    },
+    {
+      "id": "c_jonas_reed",
+      "story_id": "glass_orchard",
+      "name": "Jonas Reed",
+      "aliases": ["Jonas", "Reed"],
+      "role": "Groundskeeper",
+      "reveal_chapter": 1
+    },
+    {
+      "id": "c_pavel_halden",
+      "story_id": "glass_orchard",
+      "name": "Dr. Pavel Halden",
+      "aliases": ["Halden", "Dr. Halden", "Pavel"],
+      "role": "Family physician, the culprit",
+      "reveal_chapter": 1
+    },
+    {
+      "id": "c_tobias_quill",
+      "story_id": "glass_orchard",
+      "name": "Tobias Quill",
+      "aliases": ["Quill", "Tobias"],
+      "role": "Travelling seed merchant",
+      "reveal_chapter": 2
+    },
+    {
+      "id": "c_ruth_ames",
+      "story_id": "glass_orchard",
+      "name": "Ruth Ames",
+      "aliases": ["Ruth", "Nurse Ames"],
+      "role": "Clinic nurse, Halden's accomplice",
+      "reveal_chapter": 6
+    }
+  ],
+  "locations": [
+    {
+      "id": "l_greenhouse",
+      "story_id": "glass_orchard",
+      "name": "The Greenhouse",
+      "reveal_chapter": 1
+    },
+    {
+      "id": "l_manor",
+      "story_id": "glass_orchard",
+      "name": "Thorne Manor",
+      "reveal_chapter": 1
+    },
+    {
+      "id": "l_harbor_inn",
+      "story_id": "glass_orchard",
+      "name": "The Harbor Inn",
+      "reveal_chapter": 2
+    }
+  ],
+  "factions": [
+    {
+      "id": "f_thorne_household",
+      "story_id": "glass_orchard",
+      "name": "Thorne Household",
+      "reveal_chapter": 1
+    },
+    {
+      "id": "f_harbor_guild",
+      "story_id": "glass_orchard",
+      "name": "Harbor Merchant Guild",
+      "reveal_chapter": 2
+    }
+  ],
+  "events": [
+    {
+      "id": "ev_ledger_forged",
+      "story_id": "glass_orchard",
+      "title": "Halden and Ruth alter the estate ledger",
+      "event_chapter": 0,
+      "reveal_chapter": 6
+    },
+    {
+      "id": "ev_argument",
+      "story_id": "glass_orchard",
+      "title": "Jonas and Elias quarrel loudly",
+      "event_chapter": 1,
+      "reveal_chapter": 1
+    },
+    {
+      "id": "ev_dinner",
+      "story_id": "glass_orchard",
+      "title": "The harvest dinner",
+      "event_chapter": 1,
+      "reveal_chapter": 1
+    },
+    {
+      "id": "ev_lock_replaced",
+      "story_id": "glass_orchard",
+      "title": "The greenhouse lock is replaced",
+      "event_chapter": 1,
+      "reveal_chapter": 3
+    },
+    {
+      "id": "ev_ledger_found",
+      "story_id": "glass_orchard",
+      "title": "Mara finds the ledger discrepancy",
+      "event_chapter": 1,
+      "reveal_chapter": 3
+    },
+    {
+      "id": "ev_will_changed",
+      "story_id": "glass_orchard",
+      "title": "Elias names Mara as executor",
+      "event_chapter": 1,
+      "reveal_chapter": 4
+    },
+    {
+      "id": "ev_cider_tampered",
+      "story_id": "glass_orchard",
+      "title": "The cider is tampered with",
+      "event_chapter": 1,
+      "reveal_chapter": 5
+    },
+    {
+      "id": "ev_elias_death",
+      "story_id": "glass_orchard",
+      "title": "Elias is found dead in the greenhouse",
+      "event_chapter": 2,
+      "reveal_chapter": 2
+    }
+  ],
+  "claims": [
+    {
+      "id": "cl_mara_employed",
+      "story_id": "glass_orchard",
+      "kind": "EMPLOYED_BY",
+      "subject": "c_mara_voss",
+      "object": "c_elias_thorne",
+      "text": "Mara is employed by Elias as estate archivist",
+      "reveal_chapter": 1,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_ines_niece",
+      "story_id": "glass_orchard",
+      "kind": "KIN_OF",
+      "subject": "c_ines_calloway",
+      "object": "c_elias_thorne",
+      "text": "Ines is Elias's niece",
+      "reveal_chapter": 1,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_edith_sister",
+      "story_id": "glass_orchard",
+      "kind": "KIN_OF",
+      "subject": "c_edith_thorne",
+      "object": "c_elias_thorne",
+      "text": "Edith is Elias's sister",
+      "reveal_chapter": 1,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_halden_physician",
+      "story_id": "glass_orchard",
+      "kind": "PHYSICIAN_OF",
+      "subject": "c_pavel_halden",
+      "object": "c_elias_thorne",
+      "text": "Halden is Elias's physician",
+      "reveal_chapter": 1,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_jonas_antagonist",
+      "story_id": "glass_orchard",
+      "kind": "ANTAGONIST_OF",
+      "subject": "c_jonas_reed",
+      "object": "c_elias_thorne",
+      "text": "Jonas is Elias's antagonist",
+      "reveal_chapter": 1,
+      "superseded_by": "cl_jonas_ally",
+      "validation": "alleged"
+    },
+    {
+      "id": "cl_jonas_ally",
+      "story_id": "glass_orchard",
+      "kind": "ALLY_OF",
+      "subject": "c_jonas_reed",
+      "object": "c_elias_thorne",
+      "text": "Jonas is actually Elias's ally (the quarrel was staged)",
+      "reveal_chapter": 6,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_mara_suspects_halden",
+      "story_id": "glass_orchard",
+      "kind": "SUSPECTS",
+      "subject": "c_mara_voss",
+      "object": "c_pavel_halden",
+      "text": "Mara suspects Halden",
+      "reveal_chapter": 5,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_will_executor",
+      "story_id": "glass_orchard",
+      "kind": "PARTICIPATED_IN",
+      "role": "beneficiary",
+      "subject": "c_mara_voss",
+      "object": "ev_will_changed",
+      "text": "Elias named Mara executor",
+      "reveal_chapter": 4,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_ruth_kin_halden",
+      "story_id": "glass_orchard",
+      "kind": "KIN_OF",
+      "subject": "c_ruth_ames",
+      "object": "c_pavel_halden",
+      "text": "Ruth is Halden's sister",
+      "reveal_chapter": 6,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_halden_perp",
+      "story_id": "glass_orchard",
+      "kind": "PARTICIPATED_IN",
+      "role": "perpetrator",
+      "subject": "c_pavel_halden",
+      "object": "ev_cider_tampered",
+      "text": "Halden tampered with the cider",
+      "reveal_chapter": 7,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_quill_guild",
+      "story_id": "glass_orchard",
+      "kind": "MEMBER_OF",
+      "subject": "c_tobias_quill",
+      "object": "f_harbor_guild",
+      "text": "Quill is a harbor guild member",
+      "reveal_chapter": 2,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_elias_household",
+      "story_id": "glass_orchard",
+      "kind": "MEMBER_OF",
+      "subject": "c_elias_thorne",
+      "object": "f_thorne_household",
+      "text": "Elias heads the Thorne household",
+      "reveal_chapter": 1,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_jonas_household",
+      "story_id": "glass_orchard",
+      "kind": "MEMBER_OF",
+      "subject": "c_jonas_reed",
+      "object": "f_thorne_household",
+      "text": "Jonas is part of the Thorne household",
+      "reveal_chapter": 1,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_ines_household",
+      "story_id": "glass_orchard",
+      "kind": "MEMBER_OF",
+      "subject": "c_ines_calloway",
+      "object": "f_thorne_household",
+      "text": "Ines lives at the Thorne household",
+      "reveal_chapter": 1,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_mara_household",
+      "story_id": "glass_orchard",
+      "kind": "MEMBER_OF",
+      "subject": "c_mara_voss",
+      "object": "f_thorne_household",
+      "text": "Mara resides at the Thorne household",
+      "reveal_chapter": 1,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_edith_household",
+      "story_id": "glass_orchard",
+      "kind": "MEMBER_OF",
+      "subject": "c_edith_thorne",
+      "object": "f_thorne_household",
+      "text": "Edith lives at the Thorne household",
+      "reveal_chapter": 1,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_causal_forged_found",
+      "story_id": "glass_orchard",
+      "kind": "CAUSED",
+      "subject": "ev_ledger_forged",
+      "object": "ev_ledger_found",
+      "text": "Halden's forgery caused the ledger discrepancy found by Mara",
+      "reveal_chapter": 6,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_causal_found_tampered",
+      "story_id": "glass_orchard",
+      "kind": "CAUSED",
+      "subject": "ev_ledger_found",
+      "object": "ev_cider_tampered",
+      "text": "Mara finding the discrepancy led Halden to tamper with the cider",
+      "reveal_chapter": 7,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_causal_tampered_death",
+      "story_id": "glass_orchard",
+      "kind": "CAUSED",
+      "subject": "ev_cider_tampered",
+      "object": "ev_elias_death",
+      "text": "The poisoned cider caused Elias's death",
+      "reveal_chapter": 5,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_argument_caused_death",
+      "story_id": "glass_orchard",
+      "kind": "CAUSED",
+      "subject": "ev_argument",
+      "object": "ev_elias_death",
+      "text": "The quarrel caused the death (a false lead)",
+      "reveal_chapter": 2,
+      "superseded_by": null,
+      "validation": "false_lead"
+    },
+    {
+      "id": "cl_death_location",
+      "story_id": "glass_orchard",
+      "kind": "OCCURRED_AT",
+      "subject": "ev_elias_death",
+      "object": "l_greenhouse",
+      "text": "Elias's death occurred at the greenhouse",
+      "reveal_chapter": 2,
+      "superseded_by": null,
+      "validation": "confirmed"
+    },
+    {
+      "id": "cl_dinner_location",
+      "story_id": "glass_orchard",
+      "kind": "OCCURRED_AT",
+      "subject": "ev_dinner",
+      "object": "l_manor",
+      "text": "The harvest dinner took place at Thorne Manor",
+      "reveal_chapter": 1,
+      "superseded_by": null,
+      "validation": "confirmed"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evi_contract",
+      "story_id": "glass_orchard",
+      "kind": "document",
+      "excerpt": "Employment agreement signed between Elias Thorne and Mara Voss.",
+      "source_chapter": 1,
+      "reveal_chapter": 1,
+      "supports": ["cl_mara_employed", "cl_mara_household"]
+    },
+    {
+      "id": "evi_family_tree",
+      "story_id": "glass_orchard",
+      "kind": "document",
+      "excerpt": "Family bible listing Ines Calloway as daughter of Clara Thorne, and Edith as Elias's elder sister.",
+      "source_chapter": 1,
+      "reveal_chapter": 1,
+      "supports": ["cl_ines_niece", "cl_edith_sister", "cl_ines_household", "cl_edith_household", "cl_elias_household"]
+    },
+    {
+      "id": "evi_clinic_card",
+      "story_id": "glass_orchard",
+      "kind": "document",
+      "excerpt": "Official appointment card identifying Dr. Pavel Halden as personal physician to Elias Thorne.",
+      "source_chapter": 1,
+      "reveal_chapter": 1,
+      "supports": ["cl_halden_physician"]
+    },
+    {
+      "id": "evi_witness_edith",
+      "story_id": "glass_orchard",
+      "kind": "testimony",
+      "excerpt": "Edith states that Jonas Reed shouted violent threats at Elias during the afternoon dispute.",
+      "source_chapter": 1,
+      "reveal_chapter": 1,
+      "supports": ["cl_jonas_antagonist", "cl_argument_caused_death"]
+    },
+    {
+      "id": "evi_grounds_log",
+      "story_id": "glass_orchard",
+      "kind": "document",
+      "excerpt": "Estate grounds payroll showing Jonas Reed as resident caretaker.",
+      "source_chapter": 1,
+      "reveal_chapter": 1,
+      "supports": ["cl_jonas_household"]
+    },
+    {
+      "id": "evi_guild_ledger",
+      "story_id": "glass_orchard",
+      "kind": "document",
+      "excerpt": "Harbor Merchant Guild membership registry listing Tobias Quill as licensed seed distributor.",
+      "source_chapter": 2,
+      "reveal_chapter": 2,
+      "supports": ["cl_quill_guild"]
+    },
+    {
+      "id": "evi_death_scene",
+      "story_id": "glass_orchard",
+      "kind": "object",
+      "excerpt": "Elias Thorne's body discovered collapsed beside broken glass in the central greenhouse.",
+      "source_chapter": 2,
+      "reveal_chapter": 2,
+      "supports": ["cl_death_location"]
+    },
+    {
+      "id": "evi_dinner_menu",
+      "story_id": "glass_orchard",
+      "kind": "document",
+      "excerpt": "Harvest dinner seating plan for Thorne Manor dining room.",
+      "source_chapter": 1,
+      "reveal_chapter": 1,
+      "supports": ["cl_dinner_location"]
+    },
+    {
+      "id": "evi_ledger_page",
+      "story_id": "glass_orchard",
+      "kind": "document",
+      "excerpt": "Totals on pages 12 and 14 disagree by 4,200.",
+      "source_chapter": 3,
+      "reveal_chapter": 3,
+      "supports": ["cl_mara_suspects_halden"]
+    },
+    {
+      "id": "evi_codicil",
+      "story_id": "glass_orchard",
+      "kind": "document",
+      "excerpt": "A sealed amendment to Elias's will designating Mara Voss as legal executor of the estate.",
+      "source_chapter": 5,
+      "reveal_chapter": 5,
+      "supports": ["cl_will_executor"]
+    },
+    {
+      "id": "evi_toxicology",
+      "story_id": "glass_orchard",
+      "kind": "testimony",
+      "excerpt": "Residue in the glass decanter matches the lethal agent that stopped Elias's heart.",
+      "source_chapter": 5,
+      "reveal_chapter": 5,
+      "supports": ["cl_causal_tampered_death"]
+    },
+    {
+      "id": "evi_lock_receipt",
+      "story_id": "glass_orchard",
+      "kind": "document",
+      "excerpt": "Purchase order showing Jonas replaced the greenhouse lock under Elias's private instructions to safeguard the ledger.",
+      "source_chapter": 6,
+      "reveal_chapter": 6,
+      "supports": ["cl_jonas_ally"]
+    },
+    {
+      "id": "evi_clinic_register",
+      "story_id": "glass_orchard",
+      "kind": "document",
+      "excerpt": "Parish registry entry confirming Ruth Ames is the maiden sister of Pavel Halden.",
+      "source_chapter": 6,
+      "reveal_chapter": 6,
+      "supports": ["cl_ruth_kin_halden", "cl_causal_forged_found"]
+    },
+    {
+      "id": "evi_vial",
+      "story_id": "glass_orchard",
+      "kind": "object",
+      "excerpt": "A vial of the same toxic compound is found in Halden's medical bag.",
+      "source_chapter": 7,
+      "reveal_chapter": 7,
+      "supports": ["cl_halden_perp", "cl_causal_found_tampered"]
+    }
+  ]
 }
