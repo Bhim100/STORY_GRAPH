@@ -1,0 +1,27 @@
+[project]
+name = "storygraph-backend"
+version = "0.1.0"
+description = "Knowledge-graph mystery narrative platform powered by FalkorDB"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "falkordb>=1.0.10",
+    "pydantic>=2.7.0",
+    "python-dotenv>=1.0.1",
+    "fastapi>=0.111.0",
+    "uvicorn>=0.30.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
