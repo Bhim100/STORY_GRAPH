@@ -19,7 +19,8 @@ FALKORDB_PASSWORD = os.getenv("FALKORDB_PASSWORD", None) or None
 FALKORDB_USERNAME = os.getenv("FALKORDB_USERNAME", None) or None
 GRAPH_NAME = os.getenv("GRAPH_NAME", "glass_orchard")
 
-# LLM Providers (for Phase 5)
+# LLM provider (optional; graph answers remain available without it)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
