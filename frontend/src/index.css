@@ -1,0 +1,195 @@
+/* StoryGraph Design System: Charcoal, Warm Ivory, and Restrained Amber */
+
+:root {
+  --bg-primary: #0f1114;
+  --bg-secondary: #16191e;
+  --bg-tertiary: #1f232b;
+  --bg-surface: #262c36;
+  --bg-card: rgba(22, 25, 30, 0.85);
+  --border-subtle: #2d3440;
+  --border-active: #d97706;
+  --border-amber-glow: rgba(217, 119, 6, 0.35);
+
+  --text-ivory-primary: #f5f2eb;
+  --text-ivory-secondary: #dcd7cb;
+  --text-ivory-muted: #9c9689;
+
+  --accent-amber: #d97706;
+  --accent-amber-light: #f59e0b;
+  --accent-amber-dark: #b45309;
+  --accent-amber-bg: rgba(217, 119, 6, 0.12);
+
+  --node-character: #e2ded4;
+  --node-event: #f59e0b;
+  --node-location: #38bdf8;
+  --node-faction: #c084fc;
+
+  --font-serif: 'Cinzel', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-ivory-primary);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-amber-dark);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.825rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-tertiary);
+  color: var(--text-ivory-primary);
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  text-decoration: none;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--accent-amber);
+  color: var(--accent-amber-light);
+  background: var(--bg-surface);
+}
+
+.btn-primary {
+  background: var(--accent-amber);
+  border-color: var(--accent-amber);
+  color: #0f1114;
+  font-weight: 600;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-amber-light);
+  border-color: var(--accent-amber-light);
+  color: #000;
+  box-shadow: 0 0 12px var(--border-amber-glow);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Input Fields */
+.input-text {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.875rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-ivory-primary);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.input-text:focus {
+  border-color: var(--accent-amber);
+  box-shadow: 0 0 0 2px var(--accent-amber-bg);
+}
+
+.input-text::placeholder {
+  color: var(--text-ivory-muted);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.725rem;
+  font-family: var(--font-mono);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-ivory-secondary);
+}
+
+.badge-amber {
+  background: var(--accent-amber-bg);
+  border-color: var(--accent-amber);
+  color: var(--accent-amber-light);
+}
+
+.badge-character {
+  border-color: #71717a;
+  color: var(--node-character);
+}
+
+.badge-event {
+  border-color: var(--accent-amber);
+  color: var(--node-event);
+}
+
+.badge-location {
+  border-color: #0284c7;
+  color: var(--node-location);
+}
+
+.badge-faction {
+  border-color: #9333ea;
+  color: var(--node-faction);
+}
+
+/* Cards & Dossiers */
+.dossier-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.dossier-card:hover {
+  border-color: var(--border-active);
+}
+
+.evidence-tag {
+  font-family: var(--font-mono);
+  font-size: 0.675rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
