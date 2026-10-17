@@ -219,9 +219,6 @@ export function GraphCanvas({
           style: {
             'border-color': '#f59e0b',
             'border-width': 4,
-            'shadow-blur': 14,
-            'shadow-color': '#f59e0b',
-            'shadow-opacity': 0.8,
           },
         },
         // Highlighted Path Nodes
@@ -230,11 +227,8 @@ export function GraphCanvas({
           style: {
             'border-color': '#f59e0b',
             'border-width': 4,
-            width: 46,
-            height: 46,
-            'shadow-blur': 16,
-            'shadow-color': '#f59e0b',
-            'shadow-opacity': 0.85,
+            width: 48,
+            height: 48,
             opacity: 1,
             'z-index': 99,
           },

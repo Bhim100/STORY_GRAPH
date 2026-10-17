@@ -15,6 +15,7 @@ import {
   Check,
   Sparkles,
   Clock,
+  MoreHorizontal,
 } from 'lucide-react';
 
 function getEntityAssetUrl(node) {

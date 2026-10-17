@@ -4,6 +4,7 @@ import { ChapterSelector } from './components/ChapterSelector';
 import { GraphCanvas } from './components/GraphCanvas';
 import { DetailsPanel } from './components/DetailsPanel';
 import { QuestionPanel } from './components/QuestionPanel';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import {
   fetchHealth,
   fetchStory,
@@ -215,29 +216,35 @@ export default function App() {
           <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {activeTab === 'all' ? (
               <>
-                <QuestionPanel
-                  currentChapter={currentChapter}
-                  onAskQuestion={handleAskQuestion}
-                  loading={loadingAnswer}
-                  answerResult={answerResult}
-                  onDismissAnswer={() => setAnswerResult(null)}
-                  onSelectNode={handleSelectNode}
-                  initialQuestion={suggestedQuestion}
-                />
+                <ErrorBoundary onReset={() => setAnswerResult(null)}>
+                  <QuestionPanel
+                    currentChapter={currentChapter}
+                    onAskQuestion={handleAskQuestion}
+                    loading={loadingAnswer}
+                    answerResult={answerResult}
+                    onDismissAnswer={() => setAnswerResult(null)}
+                    onSelectNode={handleSelectNode}
+                    initialQuestion={suggestedQuestion}
+                  />
+                </ErrorBoundary>
+                <ErrorBoundary onReset={() => handleSelectNode(null)}>
+                  <DetailsPanel
+                    details={nodeDetails}
+                    loading={loadingDetails}
+                    onClose={() => handleSelectNode(null)}
+                    onSelectEntityForQuestion={handleSelectEntityForQuestion}
+                  />
+                </ErrorBoundary>
+              </>
+            ) : (
+              <ErrorBoundary onReset={() => handleSelectNode(null)}>
                 <DetailsPanel
                   details={nodeDetails}
                   loading={loadingDetails}
                   onClose={() => handleSelectNode(null)}
                   onSelectEntityForQuestion={handleSelectEntityForQuestion}
                 />
-              </>
-            ) : (
-              <DetailsPanel
-                details={nodeDetails}
-                loading={loadingDetails}
-                onClose={() => handleSelectNode(null)}
-                onSelectEntityForQuestion={handleSelectEntityForQuestion}
-              />
+              </ErrorBoundary>
             )}
           </div>
         </div>
