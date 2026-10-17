@@ -58,6 +58,7 @@ export function getEntityAssetUrl(node) {
   if (node.kind === 'Character') return `/assets/avatars/${node.id}.jpg`;
   if (node.kind === 'Event') return `/assets/events/${node.id}.jpg`;
   if (node.kind === 'Faction') return `/assets/factions/${node.id}.jpg`;
+  if (node.kind === 'Location') return `/assets/locations/${node.id}.jpg`;
   return null;
 }
 
@@ -164,6 +165,11 @@ export function GraphCanvas({
           selector: 'node[kind = "Location"]',
           style: {
             shape: 'round-hexagon',
+            width: 48,
+            height: 48,
+            'background-image': 'data(avatar)',
+            'background-fit': 'cover',
+            'background-clip': 'node',
             'background-color': '#082f49',
             'border-color': '#38bdf8',
             'border-width': 2,
@@ -382,6 +388,8 @@ export function GraphCanvas({
             avatar = `/assets/events/${id}.jpg`;
           } else if (n.data?.kind === 'Faction') {
             avatar = `/assets/factions/${id}.jpg`;
+          } else if (n.data?.kind === 'Location') {
+            avatar = `/assets/locations/${id}.jpg`;
           }
 
           return {
@@ -537,11 +545,13 @@ export function GraphCanvas({
                 style={{
                   width: '38px',
                   height: '38px',
-                  borderRadius: hoverCard.kind === 'Faction' ? '8px' : '50%',
+                  borderRadius: hoverCard.kind === 'Faction' || hoverCard.kind === 'Location' ? '8px' : '50%',
                   objectFit: 'cover',
                   border: `1.5px solid ${
                     hoverCard.kind === 'Faction'
                       ? 'var(--node-faction)'
+                      : hoverCard.kind === 'Location'
+                      ? 'var(--node-location)'
                       : hoverCard.kind === 'Event'
                       ? 'var(--node-event)'
                       : 'var(--accent-amber)'

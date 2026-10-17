@@ -22,6 +22,7 @@ function getEntityAssetUrl(node) {
   if (node.kind === 'Character') return `/assets/avatars/${node.id}.jpg`;
   if (node.kind === 'Event') return `/assets/events/${node.id}.jpg`;
   if (node.kind === 'Faction') return `/assets/factions/${node.id}.jpg`;
+  if (node.kind === 'Location') return `/assets/locations/${node.id}.jpg`;
   return null;
 }
 
@@ -246,11 +247,13 @@ export function DetailsPanel({
                 style={{
                   width: '54px',
                   height: '54px',
-                  borderRadius: node.kind === 'Faction' ? '10px' : '50%',
+                  borderRadius: node.kind === 'Faction' || node.kind === 'Location' ? '10px' : '50%',
                   objectFit: 'cover',
                   border: `2px solid ${
                     node.kind === 'Faction'
                       ? 'var(--node-faction)'
+                      : node.kind === 'Location'
+                      ? 'var(--node-location)'
                       : node.kind === 'Event'
                       ? 'var(--node-event)'
                       : 'var(--accent-amber)'
