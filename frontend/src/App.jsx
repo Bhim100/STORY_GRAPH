@@ -98,14 +98,14 @@ export default function App() {
     }
   };
 
-  const handleSelectNode = (nodeId) => {
+  const handleSelectNode = useCallback((nodeId) => {
     setSelectedNodeId(nodeId);
     if (nodeId) {
       loadNodeDetails(nodeId, currentChapter);
     } else {
       setNodeDetails(null);
     }
-  };
+  }, [currentChapter]);
 
   const handleAskQuestion = async (queryText) => {
     setLoadingAnswer(true);
@@ -125,10 +125,10 @@ export default function App() {
     }
   };
 
-  const handleSelectEntityForQuestion = (entityName) => {
+  const handleSelectEntityForQuestion = useCallback((entityName) => {
     setActiveTab('all');
     setSuggestedQuestion(`How is ${entityName} connected to the story?`);
-  };
+  }, []);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden' }}>

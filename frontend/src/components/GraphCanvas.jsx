@@ -15,6 +15,44 @@ import {
   X,
 } from 'lucide-react';
 
+// Fixed, deterministic spatial coordinates for all Glass Orchard mystery entities.
+// Guarantees 100% stable, identical graph positioning on every single reload and interaction.
+const STABLE_NODE_POSITIONS = {
+  // Characters: Elias (center victim), Mara & Halden (inner wings), family & staff (anchors)
+  c_elias_thorne: { x: 0, y: 0 },
+  c_mara_voss: { x: -170, y: -40 },
+  c_pavel_halden: { x: 170, y: -40 },
+  c_edith_thorne: { x: -130, y: 130 },
+  c_ines_calloway: { x: 130, y: 130 },
+  c_jonas_reed: { x: -290, y: 40 },
+  c_ruth_ames: { x: 290, y: -100 },
+  c_tobias_quill: { x: 310, y: 150 },
+
+  // Locations: Top quadrant (crime scene and manor) and harbor
+  l_greenhouse: { x: -130, y: -240 },
+  l_manor: { x: 130, y: -240 },
+  l_harbor_inn: { x: 310, y: 260 },
+
+  // Factions: Household bottom anchor, harbor merchant guild right anchor
+  f_thorne_household: { x: 0, y: 220 },
+  f_harbor_guild: { x: 310, y: 40 },
+
+  // Events: Grouped logically around respective locations and characters
+  ev_dinner: { x: 0, y: -140 },
+  ev_argument: { x: -220, y: -150 },
+  ev_elias_death: { x: -130, y: -340 },
+  ev_lock_replaced: { x: -260, y: -260 },
+  ev_ledger_found: { x: -80, y: -90 },
+  ev_will_changed: { x: -80, y: 70 },
+  ev_cider_tampered: { x: 140, y: -140 },
+  ev_ledger_forged: { x: 240, y: -40 },
+};
+
+function getFallbackPosition(index) {
+  const angle = (index * 45 * Math.PI) / 180;
+  return { x: Math.cos(angle) * 260, y: Math.sin(angle) * 260 };
+}
+
 export function GraphCanvas({
   elements,
   selectedNodeId,
@@ -27,6 +65,15 @@ export function GraphCanvas({
   const cyRef = useRef(null);
   const [hoverCard, setHoverCard] = useState(null);
   const hideTimerRef = useRef(null);
+
+  // Keep callback refs stable so cytoscape event listeners never need to be torn down
+  const onSelectNodeRef = useRef(onSelectNode);
+  const onSelectEntityForQuestionRef = useRef(onSelectEntityForQuestion);
+
+  useEffect(() => {
+    onSelectNodeRef.current = onSelectNode;
+    onSelectEntityForQuestionRef.current = onSelectEntityForQuestion;
+  });
 
   const getKindIcon = (kind) => {
     switch (kind) {
@@ -43,6 +90,7 @@ export function GraphCanvas({
     }
   };
 
+  // 1. Initialize Cytoscape ONCE on mount (empty dependency array prevents graph teardown)
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -70,7 +118,7 @@ export function GraphCanvas({
             'border-color': '#475569',
             'background-color': '#1e293b',
             'transition-property': 'background-color, border-color, border-width, opacity, width, height',
-            'transition-duration': '0.2s',
+            'transition-duration': '0.15s',
           },
         },
         // Character Nodes
@@ -135,18 +183,18 @@ export function GraphCanvas({
             'text-rotation': 'autorotate',
             'arrow-scale': 0.8,
             'transition-property': 'line-color, width, opacity',
-            'transition-duration': '0.2s',
+            'transition-duration': '0.15s',
           },
         },
-        // Selected Node
+        // Selected Node - Amber highlight
         {
           selector: 'node:selected',
           style: {
             'border-color': '#f59e0b',
             'border-width': 4,
-            'shadow-blur': 12,
+            'shadow-blur': 14,
             'shadow-color': '#f59e0b',
-            'shadow-opacity': 0.6,
+            'shadow-opacity': 0.8,
           },
         },
         // Highlighted Path Nodes
@@ -157,9 +205,9 @@ export function GraphCanvas({
             'border-width': 4,
             width: 46,
             height: 46,
-            'shadow-blur': 14,
+            'shadow-blur': 16,
             'shadow-color': '#f59e0b',
-            'shadow-opacity': 0.75,
+            'shadow-opacity': 0.85,
             opacity: 1,
             'z-index': 99,
           },
@@ -177,23 +225,15 @@ export function GraphCanvas({
             'font-weight': 'bold',
           },
         },
-        // Dimmed Elements (when path is active)
+        // Dimmed Elements (when path search is active)
         {
           selector: '.path-dimmed',
           style: {
-            opacity: 0.22,
+            opacity: 0.2,
           },
         },
       ],
       elements: [],
-      layout: {
-        name: 'cose',
-        animate: false,
-        randomize: false,
-        componentSpacing: 100,
-        nodeOverlap: 20,
-        nodeRepulsion: () => 400000,
-      },
       minZoom: 0.3,
       maxZoom: 3.0,
       wheelSensitivity: 0.25,
@@ -225,12 +265,12 @@ export function GraphCanvas({
         };
       });
 
-      const cardWidth = 280;
+      const cardWidth = 285;
       const cardHeight = 195;
       let x = pos.x + 20;
       let y = pos.y - 25;
 
-      // Ensure card remains completely within grid canvas bounds
+      // Smart boundary clamping within grid canvas bounds
       if (x + cardWidth > rect.width - 15) {
         x = pos.x - cardWidth - 20;
       }
@@ -264,30 +304,46 @@ export function GraphCanvas({
       setHoverCard(null);
     });
 
+    // Node click: Select node in right panel without tearing down graph
     cy.on('tap', 'node', (evt) => {
       const node = evt.target;
-      onSelectNode?.(node.id());
+      onSelectNodeRef.current?.(node.id());
       setHoverCard(null);
     });
 
+    // Background click: Deselect
     cy.on('tap', (evt) => {
       if (evt.target === cy) {
-        onSelectNode?.(null);
+        onSelectNodeRef.current?.(null);
         setHoverCard(null);
       }
     });
 
     cyRef.current = cy;
 
+    // Automatic container resize observer (adapts to panel collapse/expand smoothly)
+    let resizeObserver = null;
+    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        if (cyRef.current) {
+          cyRef.current.resize();
+        }
+      });
+      resizeObserver.observe(containerRef.current);
+    }
+
     return () => {
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       if (hideTimerRef.current) {
         clearTimeout(hideTimerRef.current);
       }
       cy.destroy();
     };
-  }, [onSelectNode]);
+  }, []); // Empty array ensures single initialization!
 
-  // Update elements and apply layout
+  // 2. Update elements with deterministic stable coordinates on chapter or data change
   useEffect(() => {
     const cy = cyRef.current;
     if (!cy) return;
@@ -295,24 +351,32 @@ export function GraphCanvas({
     cy.batch(() => {
       cy.elements().remove();
       if (elements && (elements.nodes?.length > 0 || elements.edges?.length > 0)) {
-        cy.add(elements.nodes || []);
+        const nodesWithStablePositions = (elements.nodes || []).map((n, idx) => {
+          const id = n.data?.id;
+          const pos = STABLE_NODE_POSITIONS[id] || getFallbackPosition(idx);
+          return {
+            ...n,
+            position: { ...pos },
+          };
+        });
+
+        cy.add(nodesWithStablePositions);
         cy.add(elements.edges || []);
       }
     });
 
     if (cy.nodes().length > 0) {
+      // Preset layout with stable coordinates ensures 100% consistent position across reloads
       cy.layout({
-        name: 'cose',
-        animate: true,
-        animationDuration: 400,
-        nodeDimensionsIncludeLabels: true,
+        name: 'preset',
         fit: true,
-        padding: 50,
+        padding: 60,
+        animate: false,
       }).run();
     }
   }, [elements]);
 
-  // Handle Selection & Path Highlighting
+  // 3. Handle Selection & Path Highlighting (without wiping or moving graph)
   useEffect(() => {
     const cy = cyRef.current;
     if (!cy) return;
@@ -344,11 +408,14 @@ export function GraphCanvas({
             e.removeClass('path-dimmed').addClass('path-highlight');
           }
         });
-      } else if (selectedNodeId) {
-        // Just highlight selected node
-        const node = cy.getElementById(selectedNodeId);
-        if (node.length > 0) {
-          node.select();
+      } else {
+        // Unselect all nodes first
+        cy.nodes().unselect();
+        if (selectedNodeId) {
+          const node = cy.getElementById(selectedNodeId);
+          if (node.length > 0) {
+            node.select();
+          }
         }
       }
     });
@@ -526,7 +593,7 @@ export function GraphCanvas({
               style={{ flex: 1, justifyContent: 'center' }}
               onClick={(e) => {
                 e.stopPropagation();
-                onSelectNode?.(hoverCard.id);
+                onSelectNodeRef.current?.(hoverCard.id);
                 setHoverCard(null);
               }}
               title="Inspect full case notes and evidence in right panel"
@@ -540,7 +607,7 @@ export function GraphCanvas({
               style={{ flex: 1, justifyContent: 'center' }}
               onClick={(e) => {
                 e.stopPropagation();
-                onSelectEntityForQuestion?.(hoverCard.name);
+                onSelectEntityForQuestionRef.current?.(hoverCard.name);
                 setHoverCard(null);
               }}
               title="Ask about this entity in Question Engine"
