@@ -1,12 +1,16 @@
 """Unit and integration tests for Phase 3: AI Agent & Spoiler Boundary Engine."""
 from unittest.mock import MagicMock, patch
 import pytest
+from app.db import ping
 from app.graph.explorer import find_connection, resolve_entity
 from app.llm.agent import answer_question
 from app.llm.generator import generate_grounded_answer
 from app.llm.interpreter import interpret_question
 
+requires_falkordb = pytest.mark.skipif(not ping(), reason="Requires live FalkorDB instance")
 
+
+@requires_falkordb
 def test_resolve_entity_visible_and_hidden():
     """Verify entity visibility adheres strictly to chapter boundaries."""
     # Ruth Ames is revealed in Chapter 6
@@ -26,6 +30,7 @@ def test_resolve_entity_visible_and_hidden():
     assert halden_alias[0]["id"] == "c_pavel_halden"
 
 
+@requires_falkordb
 def test_ambiguous_entity_resolution():
     """Verify that ambiguous entity names require clarification with visible options only."""
     res = answer_question("How are Thorne and Mara connected?", chapter=1)
@@ -37,6 +42,7 @@ def test_ambiguous_entity_resolution():
     assert res["path"] is None
 
 
+@requires_falkordb
 def test_hidden_entity_resolution_no_leak():
     """Verify that asking about a hidden character returns unresolved_entity with 0 leak."""
     res = answer_question("How is Ruth Ames connected to Halden?", chapter=5)
@@ -48,6 +54,7 @@ def test_hidden_entity_resolution_no_leak():
     assert res["path"] is None
 
 
+@requires_falkordb
 def test_direct_connection_at_chapter_1():
     """Verify Mara -> Elias direct connection is found and backed by evidence."""
     res = answer_question("How is Mara Voss connected to Elias Thorne?", chapter=1)
@@ -61,6 +68,7 @@ def test_direct_connection_at_chapter_1():
     assert "contract" in res["evidence"][0]["excerpt"].lower() or "employment" in res["evidence"][0]["excerpt"].lower()
 
 
+@requires_falkordb
 def test_multi_hop_route_evolution():
     """Verify Mara <-> Halden path shifts from 2 hops (via Elias) at Ch 4 to direct (SUSPECTS) at Ch 5."""
     # At Chapter 4: Only indirect route through Elias exists
@@ -77,6 +85,7 @@ def test_multi_hop_route_evolution():
     assert path_ch5["relationships"][0]["type"] == "SUSPECTS"
 
 
+@requires_falkordb
 def test_isolated_entity_no_path():
     """Verify Tobias Quill has no path to household members at any chapter."""
     res_ch2 = answer_question("How is Tobias Quill connected to Elias Thorne?", chapter=2)
@@ -87,6 +96,7 @@ def test_isolated_entity_no_path():
     assert res_ch8["status"] == "no_path"
 
 
+@requires_falkordb
 def test_unverified_claim_excluded():
     """Verify cl_will_executor (revealed Ch 4, evidence Ch 5) is untraversable at Ch 4."""
     # At Chapter 4, evidence is not yet revealed, so connection to the will changed event cannot be formed
@@ -99,6 +109,7 @@ def test_unverified_claim_excluded():
     assert path_ch5["relationships"][0]["type"] == "PARTICIPATED_IN"
 
 
+@requires_falkordb
 def test_superseded_claim_exclusion():
     """Verify Jonas Reed antagonist claim is active at Ch 1 but superseded at Ch 6."""
     path_ch1 = find_connection("c_jonas_reed", "c_elias_thorne", chapter=1)
@@ -115,6 +126,7 @@ def test_superseded_claim_exclusion():
     assert "ANTAGONIST_OF" not in rel_types_ch6
 
 
+@requires_falkordb
 def test_mock_llm_interpretation_and_generation():
     """Verify agent functions correctly when OpenAI client is mocked."""
     # Mock LLM entity selection tool call

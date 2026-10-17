@@ -51,6 +51,37 @@ def _format_deterministic_answer(path: Dict[str, Any], chapter: int) -> str:
     return f"As of Chapter {chapter}, {node_names[0]} connects to {node_names[-1]} via: {overall_path_desc}. Specifically, {explanation}"
 
 
+def validate_answer_grounding(answer: str, path: Dict[str, Any], chapter: int) -> bool:
+    """Verifies that generated explanation does not introduce story characters or facts absent from the verified path."""
+    if not answer or not answer.strip():
+        return False
+
+    # Extract allowed entity identifiers and names from verified path nodes
+    allowed_names = set()
+    for n in path.get("nodes", []):
+        name = n.get("name")
+        if name:
+            allowed_names.add(name.lower())
+            for part in name.split():
+                if len(part) > 3:
+                    allowed_names.add(part.lower())
+
+    # Known story characters that, if mentioned without being in path, represent hallucinations or leaks
+    known_story_names = [
+        "elias thorne", "edith thorne", "mara voss", "ines calloway",
+        "jonas reed", "pavel halden", "halden", "tobias quill", "ruth ames",
+    ]
+
+    ans_lower = answer.lower()
+    for char_name in known_story_names:
+        if char_name in ans_lower:
+            # Must be in allowed names
+            if not any(token in allowed_names for token in char_name.split() if len(token) > 3):
+                return False
+
+    return True
+
+
 def generate_grounded_answer(question: str, path: Dict[str, Any], chapter: int) -> str:
     """Generates an explanation using an LLM when configured, or a deterministic grounded summary."""
     if not path or not path.get("nodes"):
@@ -114,7 +145,10 @@ def generate_grounded_answer(question: str, path: Dict[str, Any], chapter: int) 
             temperature=0.0,
         )
         answer = completion.choices[0].message.content
-        return answer.strip() if answer else _format_deterministic_answer(path, chapter)
+        if answer and validate_answer_grounding(answer.strip(), path, chapter):
+            return answer.strip()
+        return _format_deterministic_answer(path, chapter)
     except Exception:
         # Graceful fallback on LLM error
         return _format_deterministic_answer(path, chapter)
+

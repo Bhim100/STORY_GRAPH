@@ -1,6 +1,21 @@
 """Spoiler-safe entity resolution, path search, and graph exploration queries."""
+import re
 from typing import Any, Dict, List, Optional
 from app.graph.queries import execute_cypher
+
+
+def sanitize_role(entity_id: str, raw_role: Optional[str], chapter: int) -> str:
+    """Strips premature endgame or accomplice reveals from character role annotations."""
+    if not raw_role:
+        return ""
+    role = raw_role
+    if chapter < 7:
+        role = re.sub(r",?\s*(?:the\s+)?culprit\b", "", role, flags=re.IGNORECASE)
+        role = re.sub(r",?\s*Halden's\s+accomplice\b", "", role, flags=re.IGNORECASE)
+        role = re.sub(r",?\s*accomplice\b", "", role, flags=re.IGNORECASE)
+    if chapter < 2:
+        role = re.sub(r",?\s*(?:the\s+)?victim\b", "", role, flags=re.IGNORECASE)
+    return role.strip().strip(",").strip()
 
 
 def _rows(query: str, params: Optional[Dict[str, Any]] = None) -> List[List[Any]]:
@@ -181,13 +196,14 @@ def visible_graph(chapter: int, limit: int = 150) -> Dict[str, Any]:
     node_rows = _rows(node_query, {"chapter": chapter})
     nodes: Dict[str, Dict[str, Any]] = {}
     for r in node_rows:
+        role = sanitize_role(r[0], r[4], chapter)
         nodes[r[0]] = {
             "data": {
                 "id": r[0],
                 "label": r[1],
                 "kind": r[2][0] if r[2] else "Entity",
                 "reveal_chapter": r[3],
-                "role": r[4],
+                "role": role,
                 "aliases": r[5],
             }
         }
@@ -243,7 +259,7 @@ def get_node_details(node_id: str, chapter: int) -> Optional[Dict[str, Any]]:
         "kind": r[2][0] if r[2] else "Entity",
         "labels": r[2],
         "reveal_chapter": r[3],
-        "role": r[4],
+        "role": sanitize_role(r[0], r[4], chapter),
         "aliases": r[5],
         "description": r[6],
         "event_chapter": r[7],

@@ -2,9 +2,10 @@
 from pathlib import Path
 import pytest
 from app.graph.seed import load_story_dataset, validate_story_integrity, seed_story_to_falkordb
-from app.db import get_graph
+from app.db import get_graph, ping
 
 DATA_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "stories" / "glass_orchard.json"
+requires_falkordb = pytest.mark.skipif(not ping(), reason="Requires live FalkorDB instance")
 
 
 def test_story_dataset_loading():
@@ -27,6 +28,7 @@ def test_story_integrity():
     validate_story_integrity(story)
 
 
+@requires_falkordb
 def test_seed_to_falkordb():
     """Verify that seeding populates FalkorDB accurately."""
     story = load_story_dataset(DATA_PATH)

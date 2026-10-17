@@ -3,11 +3,16 @@ import pytest
 from app.db import get_falkordb_client, ping
 
 
+requires_falkordb = pytest.mark.skipif(not ping(), reason="Requires live FalkorDB instance")
+
+
+@requires_falkordb
 def test_falkordb_ping():
     """Verify that FalkorDB responds to ping."""
     assert ping() is True, "FalkorDB ping failed. Check if container is running on configured port."
 
 
+@requires_falkordb
 def test_db_connection():
     """Smoke test: create throwaway graph, create node, query node, assert, and cleanup."""
     client = get_falkordb_client()

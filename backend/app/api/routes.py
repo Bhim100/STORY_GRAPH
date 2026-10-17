@@ -37,7 +37,10 @@ def story():
     try:
         return get_story_info()
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Story information unavailable: {exc}") from exc
+        raise HTTPException(
+            status_code=503,
+            detail="Story information is currently unavailable. Please check that the graph database is running."
+        ) from exc
 
 
 @router.get("/graph")
@@ -46,7 +49,10 @@ def graph(chapter: int = Query(default=1, ge=1, le=100, description="Chapter bou
     try:
         return visible_graph(chapter)
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Graph unavailable: {exc}") from exc
+        raise HTTPException(
+            status_code=503,
+            detail="Graph service is currently unavailable. Please check that the graph database is running."
+        ) from exc
 
 
 @router.get("/entities/resolve")
@@ -59,7 +65,10 @@ def resolve(
         matches = resolve_entity(name, chapter)
         return {"matches": matches}
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Resolution service unavailable: {exc}") from exc
+        raise HTTPException(
+            status_code=503,
+            detail="Entity resolution service is currently unavailable. Please check that the graph database is running."
+        ) from exc
 
 
 @router.get("/nodes/{node_id}")
@@ -79,7 +88,10 @@ def node_details(
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Node details service failed: {exc}") from exc
+        raise HTTPException(
+            status_code=503,
+            detail="Node details service is currently unavailable. Please check that the graph database is running."
+        ) from exc
 
 
 @router.get("/connection")
@@ -93,7 +105,10 @@ def connection(
         path = find_connection(source, target, chapter)
         return {"path": path}
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Connection service failed: {exc}") from exc
+        raise HTTPException(
+            status_code=503,
+            detail="Connection pathfinding service is currently unavailable. Please check that the graph database is running."
+        ) from exc
 
 
 @router.post("/ask")
@@ -102,4 +117,7 @@ def ask(request: AskRequest):
     try:
         return answer_question(request.question, request.chapter)
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Question answering service failed: {exc}") from exc
+        raise HTTPException(
+            status_code=502,
+            detail="Question answering service is temporarily unavailable. Please try again shortly."
+        ) from exc

@@ -26,63 +26,74 @@ def answer_question(question: str, chapter: int) -> Dict[str, Any]:
             "path": None,
         }
 
-    # Step 1 & 2: Entity identification and spoiler-safe resolution
-    interpretation = interpret_question(question, chapter)
-    status = interpretation.get("status")
+    try:
+        # Step 1 & 2: Entity identification and spoiler-safe resolution
+        interpretation = interpret_question(question, chapter)
+        status = interpretation.get("status")
 
-    if status in ("clarification_needed", "unresolved_entity"):
+        if status in ("clarification_needed", "unresolved_entity"):
+            return {
+                "answer": interpretation.get("answer", "Clarification needed to proceed."),
+                "status": status,
+                "resolved_entities": interpretation.get("resolved_entities", []),
+                "entities": interpretation.get("entities", []),
+                "nodes": [],
+                "relationships": [],
+                "evidence": [],
+                "path": None,
+            }
+
+        resolved = interpretation.get("resolved_entities", [])
+        if len(resolved) < 2:
+            return {
+                "answer": "Could not identify two distinct story entities to connect in this question.",
+                "status": "clarification_needed",
+                "resolved_entities": resolved,
+                "entities": interpretation.get("entities", []),
+                "nodes": [],
+                "relationships": [],
+                "evidence": [],
+                "path": None,
+            }
+
+        entity_a, entity_b = resolved[0], resolved[1]
+
+        # Step 3 & 4: Controlled FalkorDB path search and evidence retrieval
+        path = find_connection(entity_a["id"], entity_b["id"], chapter)
+        if not path or not path.get("nodes"):
+            return {
+                "answer": (
+                    f"The available story graph does not establish a supported connection "
+                    f"between {entity_a['name']} and {entity_b['name']} at Chapter {chapter}."
+                ),
+                "status": "no_path",
+                "resolved_entities": [entity_a, entity_b],
+                "nodes": [],
+                "relationships": [],
+                "evidence": [],
+                "path": None,
+            }
+
+        # Step 5 & 6: Grounded explanation generation
+        answer_text = generate_grounded_answer(question, path, chapter)
+
+        # Step 7: Structured result
         return {
-            "answer": interpretation.get("answer", "Clarification needed to proceed."),
-            "status": status,
-            "resolved_entities": interpretation.get("resolved_entities", []),
-            "entities": interpretation.get("entities", []),
-            "nodes": [],
-            "relationships": [],
-            "evidence": [],
-            "path": None,
-        }
-
-    resolved = interpretation.get("resolved_entities", [])
-    if len(resolved) < 2:
-        return {
-            "answer": "Could not identify two distinct story entities to connect in this question.",
-            "status": "clarification_needed",
-            "resolved_entities": resolved,
-            "entities": interpretation.get("entities", []),
-            "nodes": [],
-            "relationships": [],
-            "evidence": [],
-            "path": None,
-        }
-
-    entity_a, entity_b = resolved[0], resolved[1]
-
-    # Step 3 & 4: Controlled FalkorDB path search and evidence retrieval
-    path = find_connection(entity_a["id"], entity_b["id"], chapter)
-    if not path or not path.get("nodes"):
-        return {
-            "answer": (
-                f"The available story graph does not establish a supported connection "
-                f"between {entity_a['name']} and {entity_b['name']} at Chapter {chapter}."
-            ),
-            "status": "no_path",
+            "answer": answer_text,
+            "status": "answered",
             "resolved_entities": [entity_a, entity_b],
+            "nodes": path.get("nodes", []),
+            "relationships": path.get("relationships", []),
+            "evidence": path.get("evidence", []),
+            "path": path,
+        }
+    except Exception:
+        return {
+            "answer": "Unable to complete investigation due to a temporary service error. Please try again shortly.",
+            "status": "error",
+            "resolved_entities": [],
             "nodes": [],
             "relationships": [],
             "evidence": [],
             "path": None,
         }
-
-    # Step 5 & 6: Grounded explanation generation
-    answer_text = generate_grounded_answer(question, path, chapter)
-
-    # Step 7: Structured result
-    return {
-        "answer": answer_text,
-        "status": "answered",
-        "resolved_entities": [entity_a, entity_b],
-        "nodes": path.get("nodes", []),
-        "relationships": path.get("relationships", []),
-        "evidence": path.get("evidence", []),
-        "path": path,
-    }
