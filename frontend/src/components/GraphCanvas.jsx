@@ -53,6 +53,14 @@ function getFallbackPosition(index) {
   return { x: Math.cos(angle) * 260, y: Math.sin(angle) * 260 };
 }
 
+export function getEntityAssetUrl(node) {
+  if (!node || !node.id) return null;
+  if (node.kind === 'Character') return `/assets/avatars/${node.id}.jpg`;
+  if (node.kind === 'Event') return `/assets/events/${node.id}.jpg`;
+  if (node.kind === 'Faction') return `/assets/factions/${node.id}.jpg`;
+  return null;
+}
+
 export function GraphCanvas({
   elements,
   selectedNodeId,
@@ -141,8 +149,11 @@ export function GraphCanvas({
           selector: 'node[kind = "Event"]',
           style: {
             shape: 'diamond',
-            width: 42,
-            height: 42,
+            width: 44,
+            height: 44,
+            'background-image': 'data(avatar)',
+            'background-fit': 'cover',
+            'background-clip': 'node',
             'background-color': '#451a03',
             'border-color': '#f59e0b',
             'border-width': 2,
@@ -163,6 +174,11 @@ export function GraphCanvas({
           selector: 'node[kind = "Faction"]',
           style: {
             shape: 'round-rectangle',
+            width: 46,
+            height: 46,
+            'background-image': 'data(avatar)',
+            'background-fit': 'cover',
+            'background-clip': 'node',
             'background-color': '#3b0764',
             'border-color': '#c084fc',
             'border-width': 2,
@@ -359,12 +375,20 @@ export function GraphCanvas({
         const nodesWithStablePositions = (elements.nodes || []).map((n, idx) => {
           const id = n.data?.id;
           const pos = STABLE_NODE_POSITIONS[id] || getFallbackPosition(idx);
-          const isCharacter = n.data?.kind === 'Character';
+          let avatar = undefined;
+          if (n.data?.kind === 'Character') {
+            avatar = `/assets/avatars/${id}.jpg`;
+          } else if (n.data?.kind === 'Event') {
+            avatar = `/assets/events/${id}.jpg`;
+          } else if (n.data?.kind === 'Faction') {
+            avatar = `/assets/factions/${id}.jpg`;
+          }
+
           return {
             ...n,
             data: {
               ...n.data,
-              avatar: isCharacter ? `/assets/avatars/${id}.jpg` : undefined,
+              avatar,
             },
             position: { ...pos },
           };
@@ -504,18 +528,24 @@ export function GraphCanvas({
             </button>
           </div>
 
-          {/* Entity Name & Role with Avatar */}
+          {/* Entity Name & Role with Avatar/Emblem */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            {hoverCard.kind === 'Character' && (
+            {getEntityAssetUrl(hoverCard) && (
               <img
-                src={`/assets/avatars/${hoverCard.id}.jpg`}
+                src={getEntityAssetUrl(hoverCard)}
                 alt={hoverCard.name}
                 style={{
                   width: '38px',
                   height: '38px',
-                  borderRadius: '50%',
+                  borderRadius: hoverCard.kind === 'Faction' ? '8px' : '50%',
                   objectFit: 'cover',
-                  border: '1.5px solid var(--accent-amber)',
+                  border: `1.5px solid ${
+                    hoverCard.kind === 'Faction'
+                      ? 'var(--node-faction)'
+                      : hoverCard.kind === 'Event'
+                      ? 'var(--node-event)'
+                      : 'var(--accent-amber)'
+                  }`,
                   boxShadow: '0 2px 6px rgba(0, 0, 0, 0.45)',
                   flexShrink: 0,
                 }}

@@ -15,8 +15,15 @@ import {
   Check,
   Sparkles,
   Clock,
-  MoreHorizontal,
 } from 'lucide-react';
+
+function getEntityAssetUrl(node) {
+  if (!node || !node.id) return null;
+  if (node.kind === 'Character') return `/assets/avatars/${node.id}.jpg`;
+  if (node.kind === 'Event') return `/assets/events/${node.id}.jpg`;
+  if (node.kind === 'Faction') return `/assets/factions/${node.id}.jpg`;
+  return null;
+}
 
 export function DetailsPanel({
   details,
@@ -232,16 +239,22 @@ export function DetailsPanel({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.25rem' }}>
-            {node.kind === 'Character' && (
+            {getEntityAssetUrl(node) && (
               <img
-                src={`/assets/avatars/${node.id}.jpg`}
+                src={getEntityAssetUrl(node)}
                 alt={node.name}
                 style={{
-                  width: '52px',
-                  height: '52px',
-                  borderRadius: '50%',
+                  width: '54px',
+                  height: '54px',
+                  borderRadius: node.kind === 'Faction' ? '10px' : '50%',
                   objectFit: 'cover',
-                  border: '2px solid var(--accent-amber)',
+                  border: `2px solid ${
+                    node.kind === 'Faction'
+                      ? 'var(--node-faction)'
+                      : node.kind === 'Event'
+                      ? 'var(--node-event)'
+                      : 'var(--accent-amber)'
+                  }`,
                   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
                   flexShrink: 0,
                 }}
