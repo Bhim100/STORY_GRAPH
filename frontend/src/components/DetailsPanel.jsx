@@ -231,31 +231,53 @@ export function DetailsPanel({
             )}
           </div>
 
-          <h2
-            style={{
-              fontSize: '1.2rem',
-              fontFamily: 'var(--font-serif)',
-              color: 'var(--text-ivory-primary)',
-              lineHeight: 1.25,
-              wordBreak: 'break-word',
-            }}
-          >
-            {node.name}
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.25rem' }}>
+            {node.kind === 'Character' && (
+              <img
+                src={`/assets/avatars/${node.id}.jpg`}
+                alt={node.name}
+                style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '2px solid var(--accent-amber)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+                  flexShrink: 0,
+                }}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            )}
+            <div>
+              <h2
+                style={{
+                  fontSize: '1.2rem',
+                  fontFamily: 'var(--font-serif)',
+                  color: 'var(--text-ivory-primary)',
+                  lineHeight: 1.25,
+                  wordBreak: 'break-word',
+                }}
+              >
+                {node.name}
+              </h2>
 
-          {node.role && node.role.trim() !== '' && (
-            <p
-              style={{
-                fontSize: '0.8rem',
-                color: 'var(--accent-amber-light)',
-                fontWeight: 500,
-                marginTop: '0.2rem',
-                wordBreak: 'break-word',
-              }}
-            >
-              {node.role}
-            </p>
-          )}
+              {node.role && node.role.trim() !== '' && (
+                <p
+                  style={{
+                    fontSize: '0.8rem',
+                    color: 'var(--accent-amber-light)',
+                    fontWeight: 500,
+                    marginTop: '0.2rem',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  {node.role}
+                </p>
+              )}
+            </div>
+          </div>
 
           {node.description && node.description.trim() !== '' && (
             <p

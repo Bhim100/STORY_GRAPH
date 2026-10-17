@@ -126,6 +126,11 @@ export function GraphCanvas({
           selector: 'node[kind = "Character"]',
           style: {
             shape: 'ellipse',
+            width: 44,
+            height: 44,
+            'background-image': 'data(avatar)',
+            'background-fit': 'cover',
+            'background-clip': 'node',
             'background-color': '#27272a',
             'border-color': '#e4e4e7',
             'border-width': 2,
@@ -354,8 +359,13 @@ export function GraphCanvas({
         const nodesWithStablePositions = (elements.nodes || []).map((n, idx) => {
           const id = n.data?.id;
           const pos = STABLE_NODE_POSITIONS[id] || getFallbackPosition(idx);
+          const isCharacter = n.data?.kind === 'Character';
           return {
             ...n,
+            data: {
+              ...n.data,
+              avatar: isCharacter ? `/assets/avatars/${id}.jpg` : undefined,
+            },
             position: { ...pos },
           };
         });
@@ -494,32 +504,52 @@ export function GraphCanvas({
             </button>
           </div>
 
-          {/* Entity Name & Role */}
-          <div>
-            <h4
-              style={{
-                fontSize: '0.975rem',
-                fontFamily: 'var(--font-serif)',
-                color: 'var(--text-ivory-primary)',
-                lineHeight: 1.25,
-                wordBreak: 'break-word',
-              }}
-            >
-              {hoverCard.name}
-            </h4>
-            {hoverCard.role && hoverCard.role.trim() !== '' && (
-              <p
+          {/* Entity Name & Role with Avatar */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            {hoverCard.kind === 'Character' && (
+              <img
+                src={`/assets/avatars/${hoverCard.id}.jpg`}
+                alt={hoverCard.name}
                 style={{
-                  fontSize: '0.75rem',
-                  color: 'var(--accent-amber-light)',
-                  fontWeight: 500,
-                  marginTop: '0.15rem',
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '1.5px solid var(--accent-amber)',
+                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.45)',
+                  flexShrink: 0,
+                }}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h4
+                style={{
+                  fontSize: '0.975rem',
+                  fontFamily: 'var(--font-serif)',
+                  color: 'var(--text-ivory-primary)',
+                  lineHeight: 1.25,
                   wordBreak: 'break-word',
                 }}
               >
-                {hoverCard.role}
-              </p>
-            )}
+                {hoverCard.name}
+              </h4>
+              {hoverCard.role && hoverCard.role.trim() !== '' && (
+                <p
+                  style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--accent-amber-light)',
+                    fontWeight: 500,
+                    marginTop: '0.15rem',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  {hoverCard.role}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Known Aliases */}
