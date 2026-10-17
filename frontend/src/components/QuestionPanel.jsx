@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, Sparkles, Loader2, CornerDownLeft } from 'lucide-react';
 import { AnswerCard } from './AnswerCard';
 
@@ -12,10 +12,19 @@ export function QuestionPanel({
   initialQuestion = '',
 }) {
   const [question, setQuestion] = useState(initialQuestion);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     if (initialQuestion) {
       setQuestion(initialQuestion);
+      // Focus input without auto-submitting
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          const len = inputRef.current.value.length;
+          inputRef.current.setSelectionRange(len, len);
+        }
+      }, 50);
     }
   }, [initialQuestion]);
 
@@ -55,12 +64,15 @@ export function QuestionPanel({
 
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <input
+            ref={inputRef}
+            id="narrative-question-input"
             type="text"
             className="input-text"
             placeholder="e.g. How are Mara Voss and Dr. Halden connected?"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             disabled={loading}
+            aria-label="Investigate narrative question"
           />
           <button
             type="submit"

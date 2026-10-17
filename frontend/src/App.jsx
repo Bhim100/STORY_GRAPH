@@ -126,6 +126,7 @@ export default function App() {
   };
 
   const handleSelectEntityForQuestion = (entityName) => {
+    setActiveTab('all');
     setSuggestedQuestion(`How is ${entityName} connected to the story?`);
   };
 
@@ -156,6 +157,7 @@ export default function App() {
             selectedNodeId={selectedNodeId}
             highlightedPath={answerResult?.path}
             onSelectNode={handleSelectNode}
+            onSelectEntityForQuestion={handleSelectEntityForQuestion}
             loading={loadingGraph}
           />
         </div>

@@ -193,3 +193,109 @@ body {
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
+
+/* Dossier Interactive Card & Hover Actions Menu */
+.dossier-interactive-card {
+  position: relative;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dossier-interactive-card:hover {
+  border-color: var(--border-active);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.dossier-actions-container {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.dossier-interactive-card:hover .dossier-actions-container,
+.dossier-interactive-card:focus-within .dossier-actions-container,
+.dossier-actions-container.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.dossier-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+.action-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-ivory-primary);
+  font-size: 0.725rem;
+  font-weight: 500;
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.action-chip-btn:hover {
+  background: var(--accent-amber-bg);
+  border-color: var(--accent-amber);
+  color: var(--accent-amber-light);
+}
+
+.action-chip-btn:focus-visible {
+  outline: 2px solid var(--accent-amber-light);
+  outline-offset: 1px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-amber-light);
+  outline-offset: 2px;
+}
+
+/* On-Grid Floating Hover Card */
+.grid-hover-card {
+  position: absolute;
+  width: 290px;
+  max-width: calc(100vw - 40px);
+  background: rgba(18, 22, 28, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-active);
+  border-radius: var(--radius-md);
+  padding: 0.8rem 0.9rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 16px rgba(217, 119, 6, 0.2);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.775rem;
+  color: var(--text-ivory-primary);
+  pointer-events: auto;
+  animation: gridCardPop 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+@keyframes gridCardPop {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+
