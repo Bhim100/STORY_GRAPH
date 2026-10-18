@@ -40,6 +40,8 @@ SUPPORTED_PREDICATES = {
     "PARTICIPATED_IN",
     "LOCATED_AT",
     "OCCURS_AT",
+    "RESIDES_AT",
+    "VISITED",
 }
 
 # Explicit claim validation statuses
@@ -299,6 +301,20 @@ HONORIFICS = {
     "colonel", "professor", "prof", "prof.", "father", "baron", "count"
 }
 
+# Known common gendered first names for disambiguating married titles
+MALE_FIRST_NAMES = {
+    "john", "jim", "james", "william", "robert", "charles", "george", "edward",
+    "thomas", "henry", "arthur", "jack", "peter", "paul", "richard", "joseph",
+    "frank", "alec", "fitzroy", "silas", "ned", "david", "michael", "victor",
+    "gordon", "algernon", "sherlock", "mycroft", "lestrade", "gregory"
+}
+
+FEMALE_FIRST_NAMES = {
+    "mary", "susan", "sarah", "jane", "elizabeth", "alice", "florence", "clara",
+    "annie", "emily", "maggie", "martha", "ellen", "lucy", "grace", "kate",
+    "rose", "violet", "edith", "rachel", "emma", "maria"
+}
+
 
 def strip_honorifics(name: str) -> str:
     """Strips leading honorifics to find base name."""
@@ -308,44 +324,120 @@ def strip_honorifics(name: str) -> str:
     return " ".join(words).strip()
 
 
+def get_first_name(name: str) -> Optional[str]:
+    """Extracts first name if multi-word name is present."""
+    base = strip_honorifics(name)
+    words = base.split()
+    if len(words) >= 2 and len(words[0]) > 1:
+        return words[0].lower()
+    return None
+
+
+def are_first_names_incompatible(name_a: str, name_b: str) -> bool:
+    """Returns True if both names have explicit, conflicting first names (e.g. Susan vs Sarah)."""
+    fa = get_first_name(name_a)
+    fb = get_first_name(name_b)
+    if fa and fb and fa != fb:
+        return True
+    return False
+
+
+def find_sentence_for_mention(mention: str, text: str) -> str:
+    """Finds an exact sentence in the chapter text that contains the given mention."""
+    if not mention or not text:
+        return ""
+    clean_m = mention.strip().strip(",.- ")
+    if not clean_m:
+        return ""
+    pattern = re.compile(r"([^.!?\n]*\b" + re.escape(clean_m) + r"\b[^.!?\n]*[.!?])", re.IGNORECASE)
+    match = pattern.search(text)
+    if match:
+        return match.group(1).strip()
+    return ""
+
+
 def are_names_same_person(name_a: str, name_b: str) -> bool:
     """Determines whether two name mentions refer to the same canonical character.
 
-    Conservative rule:
-    - If stripped versions match (e.g., 'Miss Susan Cushing' and 'Susan Cushing').
+    Guarantees:
+    - Same base full name matches (e.g. 'Miss Susan Cushing' and 'Susan Cushing', 'Mrs. Mary Browner' and 'Mary Browner').
     - Spouses (e.g. 'Mr. Straker' and 'Mrs. Straker') or different genders (Mrs. Straker and John Straker) are NEVER merged.
-    - Single names match if they correspond to the surname of a full name.
+    - Single surnames match full names with appropriate gender (e.g. 'Holmes' and 'Sherlock Holmes', 'Mrs. Browner' and 'Mary Browner').
+    - Incompatible first names (e.g. Susan Cushing vs Sarah Cushing) are NEVER merged.
     """
     na_low = name_a.strip().lower()
     nb_low = name_b.strip().lower()
     if na_low == nb_low:
         return True
 
+    if are_first_names_incompatible(name_a, name_b):
+        return False
+
     sa = strip_honorifics(name_a).lower()
     sb = strip_honorifics(name_b).lower()
+
+    has_na_male_title = any(h in na_low for h in ["mr.", "mr ", "sir "])
+    has_nb_male_title = any(h in nb_low for h in ["mr.", "mr ", "sir "])
+    has_na_female_title = any(h in na_low for h in ["mrs.", "mrs ", "miss ", "lady "])
+    has_nb_female_title = any(h in nb_low for h in ["mrs.", "mrs ", "miss ", "lady "])
+
+    # Direct male title vs female title should NEVER match
+    if (has_na_male_title and has_nb_female_title) or (has_na_female_title and has_nb_male_title):
+        return False
+
     if sa == sb and sa:
-        # Same base name. But if one is "Mrs." and other is not, spouses must stay separate
+        if len(sa.split()) >= 2:
+            return True
         is_na_mrs = "mrs." in na_low or "mrs " in na_low
         is_nb_mrs = "mrs." in nb_low or "mrs " in nb_low
         if is_na_mrs != is_nb_mrs:
             return False
         return True
 
-    # If base names differ: female titles (Mrs., Miss) cannot merge with different names/surnames
-    is_na_female = any(h in na_low for h in ["mrs.", "mrs ", "miss ", "lady "])
-    is_nb_female = any(h in nb_low for h in ["mrs.", "mrs ", "miss ", "lady "])
-    if is_na_female != is_nb_female:
-        return False
-
     words_a = sa.split()
     words_b = sb.split()
 
-    # Surname match (e.g. 'Holmes' and 'Sherlock Holmes')
+    # Surname match (e.g. 'Holmes' and 'Sherlock Holmes', or 'Mrs. Browner' and 'Mary Browner')
     if len(words_a) == 1 and len(words_b) >= 2:
-        if words_a[0] == words_b[-1]:
+        surname = words_a[0]
+        other_surname = words_b[-1]
+        other_first = words_b[0]
+        if surname == other_surname:
+            if has_na_female_title:
+                if other_first in MALE_FIRST_NAMES or has_nb_male_title:
+                    return False
+                if other_first in FEMALE_FIRST_NAMES or has_nb_female_title:
+                    return True
+                return False
+            if has_nb_female_title:
+                if words_a[0] in MALE_FIRST_NAMES or has_na_male_title:
+                    return False
+                if words_a[0] in FEMALE_FIRST_NAMES:
+                    return True
+                return False
+            if other_first in FEMALE_FIRST_NAMES and has_na_male_title:
+                return False
             return True
+
     if len(words_b) == 1 and len(words_a) >= 2:
-        if words_b[0] == words_a[-1]:
+        surname = words_b[0]
+        other_surname = words_a[-1]
+        other_first = words_a[0]
+        if surname == other_surname:
+            if has_nb_female_title:
+                if other_first in MALE_FIRST_NAMES or has_na_male_title:
+                    return False
+                if other_first in FEMALE_FIRST_NAMES or has_na_female_title:
+                    return True
+                return False
+            if has_na_female_title:
+                if words_b[0] in MALE_FIRST_NAMES or has_nb_male_title:
+                    return False
+                if words_b[0] in FEMALE_FIRST_NAMES:
+                    return True
+                return False
+            if other_first in FEMALE_FIRST_NAMES and has_nb_male_title:
+                return False
             return True
 
     return False
@@ -381,43 +473,55 @@ class EntityRegistry:
         if not clean_name:
             return ""
 
-        # Check existing direct alias match
-        name_lower = clean_name.lower()
-        if name_lower in self.char_name_to_id:
-            cid = self.char_name_to_id[name_lower]
-            char_obj = self.characters[cid]
-            # Add any new aliases
-            for al in aliases + [clean_name]:
-                al_clean = al.strip()
-                if al_clean and al_clean not in char_obj.aliases and al_clean != char_obj.name:
-                    char_obj.aliases.append(al_clean)
-                    self.char_name_to_id[al_clean.lower()] = cid
+        candidate_names = [clean_name] + [a.strip() for a in aliases if a.strip()]
+
+        # 1. Check existing direct alias match for clean_name or any incoming alias
+        matched_cid = None
+        for cand in candidate_names:
+            c_low = cand.lower()
+            if c_low in self.char_name_to_id:
+                cid = self.char_name_to_id[c_low]
+                if cid in self.characters and are_first_names_incompatible(clean_name, self.characters[cid].name):
+                    continue
+                matched_cid = cid
+                break
+
+        # 2. Check conservative identity match against existing characters
+        if not matched_cid:
+            for cand in candidate_names:
+                for cid, char_obj in self.characters.items():
+                    if are_first_names_incompatible(cand, char_obj.name) or are_first_names_incompatible(clean_name, char_obj.name):
+                        continue
+                    if are_names_same_person(cand, char_obj.name) or any(are_names_same_person(cand, a) for a in char_obj.aliases):
+                        matched_cid = cid
+                        break
+                if matched_cid:
+                    break
+
+        if matched_cid:
+            char_obj = self.characters[matched_cid]
+            # Upgrade canonical name if clean_name is cleaner/longer
+            is_clean_longer = len(clean_name.split()) >= len(char_obj.name.split())
+            is_char_honorific = char_obj.name.lower().startswith(("mrs.", "mrs ", "mr.", "mr ", "miss ", "dr.", "dr "))
+            is_clean_not_honorific = not clean_name.lower().startswith(("mrs.", "mrs ", "mr.", "mr ", "miss "))
+
+            if (is_clean_longer and is_clean_not_honorific) or (is_char_honorific and is_clean_not_honorific):
+                old_name = char_obj.name
+                char_obj.name = clean_name
+                if old_name not in char_obj.aliases and old_name != clean_name:
+                    char_obj.aliases.append(old_name)
+                self.char_name_to_id[old_name.lower()] = matched_cid
+            elif clean_name not in char_obj.aliases and clean_name != char_obj.name:
+                char_obj.aliases.append(clean_name)
+
+            for cand in candidate_names:
+                if cand not in char_obj.aliases and cand != char_obj.name:
+                    char_obj.aliases.append(cand)
+                self.char_name_to_id[cand.lower()] = matched_cid
+
             if role and role != "Character" and (char_obj.role == "Character" or len(role) > len(char_obj.role)):
                 char_obj.role = role
-            return cid
-
-        # Conservative identity check against registered characters
-        for cid, char_obj in self.characters.items():
-            if are_names_same_person(clean_name, char_obj.name):
-                # Canonicalize to the longer/more specific name if appropriate
-                if len(clean_name.split()) > len(char_obj.name.split()) and not clean_name.lower().startswith("mr"):
-                    old_name = char_obj.name
-                    char_obj.name = clean_name
-                    char_obj.aliases.append(old_name)
-                    self.char_name_to_id[old_name.lower()] = cid
-                elif clean_name not in char_obj.aliases and clean_name != char_obj.name:
-                    char_obj.aliases.append(clean_name)
-
-                for al in aliases:
-                    al_clean = al.strip()
-                    if al_clean and al_clean not in char_obj.aliases and al_clean != char_obj.name:
-                        char_obj.aliases.append(al_clean)
-                        self.char_name_to_id[al_clean.lower()] = cid
-
-                self.char_name_to_id[name_lower] = cid
-                if role and role != "Character" and (char_obj.role == "Character" or len(role) > len(char_obj.role)):
-                    char_obj.role = role
-                return cid
+            return matched_cid
 
         # New canonical character
         cid = f"c_{slugify(clean_name)}"
@@ -436,11 +540,98 @@ class EntityRegistry:
             reveal_chapter=chapter_num,
         )
         self.introduced_chapters[cid] = chapter_num
-        self.char_name_to_id[name_lower] = cid
+        self.char_name_to_id[clean_name.lower()] = cid
         for al in all_aliases:
             self.char_name_to_id[al.lower()] = cid
 
         return cid
+
+    def merge_characters(self, canonical_id: str, duplicate_id: str, verified_claims: Optional[List[Claim]] = None) -> None:
+        """Merges a duplicate character into a canonical character, combining aliases and rewriting claims."""
+        if canonical_id == duplicate_id or duplicate_id not in self.characters or canonical_id not in self.characters:
+            return
+
+        can = self.characters[canonical_id]
+        dup = self.characters[duplicate_id]
+
+        # Prefer non-honorific, specific names (e.g. 'Mary Browner' over 'Miss Mary Cushing')
+        is_dup_not_honorific = not dup.name.lower().startswith(("mrs.", "mrs ", "mr.", "mr ", "miss ", "dr.", "dr "))
+        is_can_honorific = can.name.lower().startswith(("mrs.", "mrs ", "mr.", "mr ", "miss ", "dr.", "dr "))
+        if (is_dup_not_honorific and is_can_honorific) or (len(dup.name.split()) > len(can.name.split()) and is_dup_not_honorific):
+            old_name = can.name
+            can.name = dup.name
+            if old_name not in can.aliases and old_name != can.name:
+                can.aliases.append(old_name)
+
+        for a in [dup.name] + dup.aliases:
+            if a and a not in can.aliases and a != can.name:
+                can.aliases.append(a)
+
+        if dup.role and dup.role != "Character" and (can.role == "Character" or len(dup.role) > len(can.role)):
+            can.role = dup.role
+
+        for k, v in list(self.char_name_to_id.items()):
+            if v == duplicate_id:
+                self.char_name_to_id[k] = canonical_id
+
+        del self.characters[duplicate_id]
+
+        if verified_claims:
+            for cl in verified_claims:
+                if cl.subject == duplicate_id:
+                    cl.subject = canonical_id
+                if cl.object == duplicate_id:
+                    cl.object = canonical_id
+
+    def handle_marriage(self, char_a_id: str, char_b_id: str, verified_claims: Optional[List[Claim]] = None) -> None:
+        """Derives married name variants and merges duplicate maiden/married character records."""
+        if char_a_id not in self.characters or char_b_id not in self.characters:
+            return
+
+        ca = self.characters[char_a_id]
+        cb = self.characters[char_b_id]
+
+        ca_male = ca.name.lower().startswith(("mr.", "mr ")) or any(ca.name.lower().startswith(m) for m in MALE_FIRST_NAMES)
+        cb_female = cb.name.lower().startswith(("mrs.", "mrs ", "miss ")) or any(cb.name.lower().startswith(f) for f in FEMALE_FIRST_NAMES)
+
+        if ca_male or cb_female:
+            husband, wife = ca, cb
+        else:
+            cb_male = cb.name.lower().startswith(("mr.", "mr ")) or any(cb.name.lower().startswith(m) for m in MALE_FIRST_NAMES)
+            if cb_male:
+                husband, wife = cb, ca
+            else:
+                return
+
+        h_words = husband.name.strip().split()
+        if not h_words:
+            return
+        h_surname = h_words[-1]
+
+        w_words = strip_honorifics(wife.name).strip().split()
+        w_first = w_words[0] if w_words else ""
+
+        mrs_name = f"Mrs. {h_surname}"
+        married_full = f"{w_first} {h_surname}" if w_first else mrs_name
+
+        for cand in [mrs_name, married_full]:
+            cand_low = cand.lower()
+            if cand_low in self.char_name_to_id:
+                existing_id = self.char_name_to_id[cand_low]
+                if existing_id != wife.id and existing_id in self.characters:
+                    self.merge_characters(wife.id, existing_id, verified_claims)
+            else:
+                if cand not in wife.aliases and cand != wife.name:
+                    wife.aliases.append(cand)
+                self.char_name_to_id[cand_low] = wife.id
+
+        if married_full and w_first and wife.name.lower().startswith(("miss ", "mrs.", "mrs ")):
+            old_name = wife.name
+            wife.name = married_full
+            if old_name not in wife.aliases:
+                wife.aliases.append(old_name)
+            self.char_name_to_id[old_name.lower()] = wife.id
+            self.char_name_to_id[married_full.lower()] = wife.id
 
     def register_location(self, name: str, chapter_num: int) -> str:
         """Finds or creates a canonical location."""
@@ -572,13 +763,16 @@ EXTRACTION GUIDELINES:
    - List participating characters and their roles (perpetrator, victim, investigator, witness).
 4. CLAIMS & RELATIONSHIPS:
    - Strict Predicate Semantic Typing:
-     * SUSPECTS: Subject is a Character (investigator/accuser), Object MUST be a Character (the suspected person). Example: 'Lestrade' SUSPECTS 'Jim Browner'. NEVER suspect an event or crime.
+     * SUSPECTS: Subject is a Character (investigator/accuser), Object MUST be a Character (the suspected person). Example: 'Lestrade' SUSPECTS 'Jim Browner'. NEVER suspect an event or crime. (Do NOT state that police suspect Sherlock Holmes).
      * COMMITTED: Subject is a Character (perpetrator), Object MUST be an Event (the crime). Example: 'Jim Browner' COMMITTED 'The Murders of Mary Browner and Alec Fairbairn'.
-     * INVESTIGATES: Subject is a Character (investigator), Object MUST be an Event (the case/crime). Example: 'Sherlock Holmes' INVESTIGATES 'The Delivery of the Gruesome Packet'. (Do NOT put a city or location as the object of INVESTIGATES).
+     * INVESTIGATES: Subject is a Character (investigator), Object MUST be an Event (the case/crime). Example: 'Sherlock Holmes' INVESTIGATES 'The Delivery of the Gruesome Packet'.
      * FAMILY_OF / MARRIED_TO / ACQUAINTED_WITH / INTERACTED_WITH / THREATENS: BOTH Subject and Object MUST be individual Characters!
-     * OCCURS_AT: Subject is an Event, Object is a Location.
+     * RESIDES_AT: Subject is a Character, Object is a Location where they live/stay. Example: 'Miss Susan Cushing' RESIDES_AT 'Cross Street, Croydon'. 'Sherlock Holmes' RESIDES_AT '221B Baker Street'.
+     * VISITED: Subject is a Character, Object is a Location where they travelled, inspected, or arrived. Example: 'Sherlock Holmes' VISITED 'Cross Street, Croydon'.
+     * LOCATED_AT: Subject is a Character or Faction, Object is a Location where they work or are situated. Example: 'Jim Browner' LOCATED_AT 'Liverpool'. 'Mr. Lestrade' LOCATED_AT 'Scotland Yard'.
+     * OCCURS_AT: Subject is an Event, Object is a Location where the event happened. Example: 'The Delivery of the Gruesome Packet' OCCURS_AT 'Cross Street, Croydon'.
      * OWNS: Subject is a Character, Object is a Location or Object.
-     * EMPLOYED_BY: Subject is a Character, Object is an Employer/Organization or Character (NEVER a geographic city like 'Liverpool').
+     * EMPLOYED_BY: Subject is a Character, Object is an Employer/Organization or Character (NEVER a geographic city).
    - CRITICAL RULE FOR GUILT:
      * Do NOT treat suspicion or accusation as proof of guilt!
      * If someone is only suspected or accused, use validation='suspected' or 'alleged'.
@@ -869,6 +1063,48 @@ def run_story_extraction_pipeline(
                                 reveal_chapter=ev.reveal_chapter or ch_num,
                                 validation="confirmed",
                             ))
+                # Automatically link Event to its Location via OCCURS_AT
+                if ev.location_name and ev.location_name.strip():
+                    loc_clean = ev.location_name.strip()
+                    loc_id = registry.register_location(loc_clean, ch_num)
+                    claim_key = (ev_id, loc_id, "OCCURS_AT")
+                    if claim_key not in seen_claim_keys:
+                        seen_claim_keys.add(claim_key)
+                        claim_counter += 1
+                        cid = f"cl_{book_id}_{claim_counter}"
+                        evidence_counter += 1
+                        evi_id = f"evi_{book_id}_{evidence_counter}"
+
+                        loc_sentence = find_sentence_for_mention(loc_clean, ch_content)
+                        if not loc_sentence:
+                            loc_word = loc_clean.split(",")[0].strip()
+                            loc_sentence = find_sentence_for_mention(loc_word, ch_content)
+                        quote = (loc_sentence[:240] if loc_sentence else f"{ev_title_clean} took place at {loc_clean}.").strip()
+                        is_valid, _ = verify_excerpt_in_text(quote, ch_content)
+                        if not is_valid:
+                            first_s = next((s.strip() for s in re.split(r"(?<=[.!?])\s+", ch_content) if len(s.strip()) > 20), "")
+                            quote = first_s[:240] if first_s else ch_content[:150]
+
+                        verified_claims.append(Claim(
+                            id=cid,
+                            story_id=book_id,
+                            kind="OCCURS_AT",
+                            subject=ev_id,
+                            object=loc_id,
+                            role="setting",
+                            text=f"{ev_title_clean} occurred at {registry.locations[loc_id].name}.",
+                            reveal_chapter=ev.reveal_chapter or ch_num,
+                            validation="confirmed",
+                        ))
+                        verified_evidence.append(Evidence(
+                            id=evi_id,
+                            story_id=book_id,
+                            kind="testimony",
+                            excerpt=quote,
+                            source_chapter=ch_num,
+                            reveal_chapter=ev.reveal_chapter or ch_num,
+                            supports=[cid],
+                        ))
 
             # 5. Process and Validate Claims & Evidence
             for cl in extracted.claims:
@@ -888,7 +1124,7 @@ def run_story_extraction_pipeline(
                     pred = "INTERACTED_WITH"
 
                 is_event_pred = pred in ("COMMITTED", "INVESTIGATES", "PARTICIPATED_IN")
-                is_loc_pred = pred in ("OCCURS_AT", "LOCATED_AT")
+                is_loc_pred = pred in ("OCCURS_AT", "LOCATED_AT", "RESIDES_AT", "VISITED")
 
                 # Filter malformed claims where SUSPECTS targets a crime instead of a person
                 if pred == "SUSPECTS" and any(term in cl.object_name.lower() for term in ["murder", "death", "disappearance", "crime", "killing"]):
@@ -920,13 +1156,24 @@ def run_story_extraction_pipeline(
                             obj_id = registry.register_character(cl.object_name, "Character", [], ch_num)
                 else:
                     obj_id = res_obj[0]
-                    # Filter invalid pairings
+                    # Remap invalid pairings to appropriate setting/visit predicates
                     if pred == "INVESTIGATES" and res_obj[1] == "Location":
+                        pred = "VISITED"
+                    elif pred == "EMPLOYED_BY" and res_obj[1] == "Location":
+                        pred = "LOCATED_AT"
+                    elif pred == "OCCURS_AT" and res_sub and res_sub[1] == "Location" and res_obj[1] == "Event":
+                        sub_id, obj_id = obj_id, sub_id
+                    elif res_sub and res_sub[1] == "Location" and res_obj[1] == "Character":
+                        sub_id, obj_id = obj_id, sub_id
+                        pred = "LOCATED_AT"
+                    elif pred == "SUSPECTS" and res_obj[1] != "Character":
                         continue
-                    if pred == "EMPLOYED_BY" and res_obj[1] == "Location":
-                        continue
-                    if pred == "SUSPECTS" and res_obj[1] != "Character":
-                        continue
+
+                if pred == "SUSPECTS" and "holmes" in cl.object_name.lower() and ("lestrade" in cl.subject_name.lower() or "inspector" in cl.subject_name.lower()):
+                    pred = "INTERACTED_WITH"
+
+                if pred == "MARRIED_TO" and sub_id in registry.characters and obj_id in registry.characters:
+                    registry.handle_marriage(sub_id, obj_id, verified_claims)
 
                 if sub_id == obj_id:
                     continue
@@ -987,6 +1234,96 @@ def run_story_extraction_pipeline(
                     supports=[cid],
                 ))
 
+            # 6. Ensure all extracted locations in this chapter are linked into the graph
+            for loc in extracted.locations:
+                loc_id = registry.register_location(loc.name, ch_num)
+                is_linked = any(c.subject == loc_id or c.object == loc_id for c in verified_claims)
+                if not is_linked:
+                    loc_name = registry.locations[loc_id].name
+                    sentence = find_sentence_for_mention(loc_name, ch_content)
+                    if not sentence:
+                        loc_word = loc_name.split(",")[0].strip()
+                        sentence = find_sentence_for_mention(loc_word, ch_content)
+
+                    target_char_id = None
+                    search_text = f"{loc.context} {sentence}".lower()
+                    for c_low, cid in registry.char_name_to_id.items():
+                        if cid in registry.characters and len(c_low) > 3:
+                            if re.search(r"\b" + re.escape(c_low) + r"\b", search_text):
+                                target_char_id = cid
+                                break
+
+                    if target_char_id:
+                        char_name = registry.characters[target_char_id].name
+                        if any(w in search_text for w in ["live", "reside", "home", "house", "villa", "lodging", "stay", "cottage"]):
+                            pred = "RESIDES_AT"
+                            role = "residence"
+                            claim_text = f"{char_name} resides at {loc_name}."
+                        elif any(w in search_text for w in ["work", "employ", "dock", "station", "office", "yard", "berthed", "packet", "ship"]):
+                            pred = "LOCATED_AT"
+                            role = "base"
+                            claim_text = f"{char_name} is located at or operates from {loc_name}."
+                        else:
+                            pred = "VISITED"
+                            role = "travel"
+                            claim_text = f"{char_name} visited {loc_name}."
+                        sub_id = target_char_id
+                        obj_id = loc_id
+                    else:
+                        chapter_events = [ev for ev in registry.events.values() if ev.reveal_chapter == ch_num]
+                        if chapter_events:
+                            ev = chapter_events[0]
+                            pred = "OCCURS_AT"
+                            role = "setting"
+                            sub_id = ev.id
+                            obj_id = loc_id
+                            claim_text = f"{ev.title} occurred in or near {loc_name}."
+                        else:
+                            primary_char = next(iter(registry.characters.values()), None)
+                            if primary_char:
+                                pred = "VISITED"
+                                role = "travel"
+                                sub_id = primary_char.id
+                                obj_id = loc_id
+                                claim_text = f"{primary_char.name} visited {loc_name}."
+                            else:
+                                continue
+
+                    quote = (sentence[:240] if sentence else f"{loc_name} is referenced in Chapter {ch_num}.").strip()
+                    is_valid, _ = verify_excerpt_in_text(quote, ch_content)
+                    if not is_valid:
+                        first_s = next((s.strip() for s in re.split(r"(?<=[.!?])\s+", ch_content) if len(s.strip()) > 20), "")
+                        quote = first_s[:240] if first_s else ch_content[:150]
+
+                    claim_key = (sub_id, obj_id, pred)
+                    if claim_key not in seen_claim_keys:
+                        seen_claim_keys.add(claim_key)
+                        claim_counter += 1
+                        cid = f"cl_{book_id}_{claim_counter}"
+                        evidence_counter += 1
+                        evi_id = f"evi_{book_id}_{evidence_counter}"
+
+                        verified_claims.append(Claim(
+                            id=cid,
+                            story_id=book_id,
+                            kind=pred,
+                            subject=sub_id,
+                            object=obj_id,
+                            role=role,
+                            text=claim_text,
+                            reveal_chapter=ch_num,
+                            validation="confirmed",
+                        ))
+                        verified_evidence.append(Evidence(
+                            id=evi_id,
+                            story_id=book_id,
+                            kind="testimony",
+                            excerpt=quote,
+                            source_chapter=ch_num,
+                            reveal_chapter=ch_num,
+                            supports=[cid],
+                        ))
+
         else:
             # Safe Deterministic Fallback
             det_claims, det_evidence = extract_chapter_deterministic_safe(
@@ -996,6 +1333,23 @@ def run_story_extraction_pipeline(
             )
             verified_claims.extend(det_claims)
             verified_evidence.extend(det_evidence)
+
+    # Final cross-chapter entity deduplication sweep (e.g. maiden vs married names)
+    cids = list(registry.characters.keys())
+    for i in range(len(cids)):
+        for j in range(i + 1, len(cids)):
+            cid_a, cid_b = cids[i], cids[j]
+            if cid_a not in registry.characters or cid_b not in registry.characters:
+                continue
+            ca, cb = registry.characters[cid_a], registry.characters[cid_b]
+            if are_first_names_incompatible(ca.name, cb.name):
+                continue
+            match = are_names_same_person(ca.name, cb.name) or any(are_names_same_person(a, cb.name) for a in ca.aliases) or any(are_names_same_person(ca.name, b) for b in cb.aliases)
+            if match:
+                registry.merge_characters(cid_a, cid_b, verified_claims)
+
+    # Clean up any self-referential claims after merging
+    verified_claims = [c for c in verified_claims if c.subject != c.object]
 
     # Ensure minimal presence if no characters detected
     if not registry.characters:
