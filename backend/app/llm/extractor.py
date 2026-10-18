@@ -57,18 +57,63 @@ SUPPORTED_VALIDATIONS = {
 # ============================================================================
 
 class RawExtractedCharacter(BaseModel):
-    name: str = Field(description="Canonical full name of the character as identified in this passage")
+    name: str = Field(default="", description="Canonical full name of the character as identified in this passage")
     role: str = Field(default="Character", description="Source-supported role or function, e.g. Consulting Detective, Victim, Suspect, Stable Boy")
     aliases: List[str] = Field(default_factory=list, description="Other names, honorifics, or titles used for this character")
 
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_character(cls, data: Any) -> Any:
+        if isinstance(data, str):
+            return {"name": data, "role": "Character", "aliases": []}
+        if isinstance(data, dict):
+            if not data.get("name"):
+                for k in ("canonical_name", "character_name", "full_name", "character"):
+                    if data.get(k):
+                        data["name"] = str(data[k])
+                        break
+            if not data.get("name"):
+                data["name"] = "Unknown Character"
+        return data
+
 
 class RawExtractedLocation(BaseModel):
-    name: str = Field(description="Name of the place, estate, room, or setting")
+    name: str = Field(default="", description="Name of the place, estate, room, or setting")
     context: str = Field(default="", description="Source-supported context or description of this location")
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_location(cls, data: Any) -> Any:
+        if isinstance(data, str):
+            return {"name": data}
+        if isinstance(data, dict):
+            if not data.get("name"):
+                for k in ("location_name", "canonical_name", "place"):
+                    if data.get(k):
+                        data["name"] = str(data[k])
+                        break
+            if not data.get("name"):
+                data["name"] = "Unknown Location"
+        return data
 
 
 class RawExtractedFaction(BaseModel):
-    name: str = Field(description="Name of the organization, family, firm, police department, or faction")
+    name: str = Field(default="", description="Name of the organization, family, firm, police department, or faction")
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_faction(cls, data: Any) -> Any:
+        if isinstance(data, str):
+            return {"name": data}
+        if isinstance(data, dict):
+            if not data.get("name"):
+                for k in ("faction_name", "organization_name", "group_name"):
+                    if data.get(k):
+                        data["name"] = str(data[k])
+                        break
+            if not data.get("name"):
+                data["name"] = "Unknown Faction"
+        return data
 
 
 class RawExtractedParticipant(BaseModel):
@@ -267,8 +312,8 @@ def are_names_same_person(name_a: str, name_b: str) -> bool:
     """Determines whether two name mentions refer to the same canonical character.
 
     Conservative rule:
-    - If stripped versions match (e.g., 'Mr. Holmes' and 'Sherlock Holmes' sharing last name).
-    - Female and male variants (e.g., 'Mrs. Straker' and 'John Straker') are NEVER merged.
+    - If stripped versions match (e.g., 'Miss Susan Cushing' and 'Susan Cushing').
+    - Spouses (e.g. 'Mr. Straker' and 'Mrs. Straker') or different genders (Mrs. Straker and John Straker) are NEVER merged.
     - Single names match if they correspond to the surname of a full name.
     """
     na_low = name_a.strip().lower()
@@ -276,16 +321,21 @@ def are_names_same_person(name_a: str, name_b: str) -> bool:
     if na_low == nb_low:
         return True
 
-    # Do not merge different genders or spouses
-    is_na_mrs = "mrs." in na_low or "mrs " in na_low or "miss " in na_low or "lady " in na_low
-    is_nb_mrs = "mrs." in nb_low or "mrs " in nb_low or "miss " in nb_low or "lady " in nb_low
-    if is_na_mrs != is_nb_mrs:
-        return False
-
     sa = strip_honorifics(name_a).lower()
     sb = strip_honorifics(name_b).lower()
     if sa == sb and sa:
+        # Same base name. But if one is "Mrs." and other is not, spouses must stay separate
+        is_na_mrs = "mrs." in na_low or "mrs " in na_low
+        is_nb_mrs = "mrs." in nb_low or "mrs " in nb_low
+        if is_na_mrs != is_nb_mrs:
+            return False
         return True
+
+    # If base names differ: female titles (Mrs., Miss) cannot merge with different names/surnames
+    is_na_female = any(h in na_low for h in ["mrs.", "mrs ", "miss ", "lady "])
+    is_nb_female = any(h in nb_low for h in ["mrs.", "mrs ", "miss ", "lady "])
+    if is_na_female != is_nb_female:
+        return False
 
     words_a = sa.split()
     words_b = sb.split()
@@ -511,25 +561,27 @@ Your task is to read a chapter from a narrative manuscript and extract structure
 
 EXTRACTION GUIDELINES:
 1. CHARACTERS:
-   - Extract canonical character names, their role in this chapter (e.g. 'Investigating Detective', 'Victim', 'Suspect', 'Racehorse Trainer', 'Horse Owner'), and any aliases/titles.
+   - Extract real narrative individuals (e.g. 'Sherlock Holmes', 'Miss Susan Cushing', 'Jim Browner').
+   - NEVER classify an event, action, or crime (e.g. 'The murders of his wife') as a Character.
+   - Extract their canonical name, role (e.g. 'Investigating Detective', 'Victim', 'Suspect', 'Perpetrator'), and aliases.
 2. LOCATIONS:
-   - Extract real narrative locations (e.g. 'King's Pyland Stables', 'Tavistock Inquest Room', '221B Baker Street').
+   - Extract real narrative locations (e.g. 'Cross Street, Croydon', '221B Baker Street', 'Liverpool').
 3. NARRATIVE EVENTS:
-   - Extract actual plot occurrences (e.g. 'The Disappearance of Silver Blaze', 'The Discovery of Straker's Body').
-   - Track 'occurrence_chapter' (when it happened) and 'reveal_chapter' (this current chapter).
-   - List participating characters and their roles (e.g. perpetrator, victim, witness, investigator).
+   - Extract specific plot events or crimes (e.g. 'The Delivery of the Gruesome Packet', 'The Murders of Mary Browner and Alec Fairbairn').
+   - NEVER create vague or placeholder events like 'Narrative Event', 'Event', or 'Conversation'.
+   - List participating characters and their roles (perpetrator, victim, investigator, witness).
 4. CLAIMS & RELATIONSHIPS:
-   - Use specific predicates: OWNS, TRAINS, INVESTIGATES, MARRIED_TO, SUSPECTS, EMPLOYED_BY, THREATENS, PRESENT_AT, COMMITTED, FAMILY_OF, ACQUAINTED_WITH, INTERACTED_WITH, OCCURS_AT.
-   - VALIDATION STATUS:
-     * 'confirmed': Explicitly established as fact in narrative.
-     * 'alleged': Stated or claimed by a character but not yet verified.
-     * 'suspected': Held under suspicion, arrested, or theorized by an investigator.
-     * 'disputed': Directly contested or contradicted by another character or clue.
-     * 'unknown': Uncertain or unconfirmed.
+   - Strict Predicate Semantic Typing:
+     * SUSPECTS: Subject is a Character (investigator/accuser), Object MUST be a Character (the suspected person). Example: 'Lestrade' SUSPECTS 'Jim Browner'. NEVER suspect an event or crime.
+     * COMMITTED: Subject is a Character (perpetrator), Object MUST be an Event (the crime). Example: 'Jim Browner' COMMITTED 'The Murders of Mary Browner and Alec Fairbairn'.
+     * INVESTIGATES: Subject is a Character (investigator), Object MUST be an Event (the case/crime). Example: 'Sherlock Holmes' INVESTIGATES 'The Delivery of the Gruesome Packet'. (Do NOT put a city or location as the object of INVESTIGATES).
+     * FAMILY_OF / MARRIED_TO / ACQUAINTED_WITH / INTERACTED_WITH / THREATENS: BOTH Subject and Object MUST be individual Characters!
+     * OCCURS_AT: Subject is an Event, Object is a Location.
+     * OWNS: Subject is a Character, Object is a Location or Object.
+     * EMPLOYED_BY: Subject is a Character, Object is an Employer/Organization or Character (NEVER a geographic city like 'Liverpool').
    - CRITICAL RULE FOR GUILT:
-     * Do NOT treat suspicion or arrest as proof of guilt!
-     * Use 'COMMITTED' ONLY when the narrative definitively establishes the act as true fact.
-     * If someone is arrested, accused, or suspected without conclusive proof, use predicate 'SUSPECTS' with validation='suspected' or 'alleged', NEVER 'COMMITTED'.
+     * Do NOT treat suspicion or accusation as proof of guilt!
+     * If someone is only suspected or accused, use validation='suspected' or 'alleged'.
 5. EVIDENCE (CRITICAL):
    - For EVERY claim, you MUST provide an 'excerpt': an EXACT, VERBATIM quote from this chapter supporting the claim.
    - Keep excerpts concise (under 250 characters).
@@ -785,8 +837,13 @@ def run_story_extraction_pipeline(
 
             # 4. Register Narrative Events
             for ev in extracted.events:
+                ev_title_clean = ev.title.strip()
+                if not ev_title_clean or ev_title_clean.lower() in (
+                    "narrative event", "event", "story event", "narrative", "untitled event"
+                ):
+                    continue
                 ev_id = registry.register_event(
-                    title=ev.title,
+                    title=ev_title_clean,
                     occurrence_ch=ev.occurrence_chapter or ch_num,
                     reveal_ch=ev.reveal_chapter or ch_num,
                 )
@@ -808,7 +865,7 @@ def run_story_extraction_pipeline(
                                 subject=pid,
                                 object=ev_id,
                                 role=part.role,
-                                text=f"{registry.characters[pid].name} participated in {ev.title} as {part.role}.",
+                                text=f"{registry.characters[pid].name} participated in {ev_title_clean} as {part.role}.",
                                 reveal_chapter=ev.reveal_chapter or ch_num,
                                 validation="confirmed",
                             ))
@@ -826,28 +883,53 @@ def run_story_extraction_pipeline(
                     })
                     continue
 
+                pred = cl.predicate.upper().strip()
+                if pred not in SUPPORTED_PREDICATES:
+                    pred = "INTERACTED_WITH"
+
+                is_event_pred = pred in ("COMMITTED", "INVESTIGATES", "PARTICIPATED_IN")
+                is_loc_pred = pred in ("OCCURS_AT", "LOCATED_AT")
+
+                # Filter malformed claims where SUSPECTS targets a crime instead of a person
+                if pred == "SUSPECTS" and any(term in cl.object_name.lower() for term in ["murder", "death", "disappearance", "crime", "killing"]):
+                    continue
+
                 # Resolve Subject and Object
                 res_sub = registry.resolve_any_entity(cl.subject_name)
                 res_obj = registry.resolve_any_entity(cl.object_name)
 
-                # Register if new
+                # Register Subject if new
                 if not res_sub:
-                    sub_id = registry.register_character(cl.subject_name, "Character", [], ch_num)
+                    if pred == "OCCURS_AT":
+                        sub_id = registry.register_event(cl.subject_name, ch_num, ch_num)
+                    else:
+                        sub_id = registry.register_character(cl.subject_name, "Character", [], ch_num)
                 else:
                     sub_id = res_sub[0]
 
+                # Register Object if new with semantic typing
                 if not res_obj:
-                    obj_id = registry.register_character(cl.object_name, "Character", [], ch_num)
+                    if is_event_pred:
+                        obj_id = registry.register_event(cl.object_name, ch_num, ch_num)
+                    elif is_loc_pred or (pred == "OWNS" and any(w in cl.object_name.lower() for w in ["street", "house", "stables", "manor", "estate", "room", "hall"])):
+                        obj_id = registry.register_location(cl.object_name, ch_num)
+                    else:
+                        if any(term in cl.object_name.lower() for term in ["murder", "death", "disappearance", "crime", "packet"]):
+                            obj_id = registry.register_event(cl.object_name, ch_num, ch_num)
+                        else:
+                            obj_id = registry.register_character(cl.object_name, "Character", [], ch_num)
                 else:
                     obj_id = res_obj[0]
+                    # Filter invalid pairings
+                    if pred == "INVESTIGATES" and res_obj[1] == "Location":
+                        continue
+                    if pred == "EMPLOYED_BY" and res_obj[1] == "Location":
+                        continue
+                    if pred == "SUSPECTS" and res_obj[1] != "Character":
+                        continue
 
                 if sub_id == obj_id:
                     continue
-
-                # Predicate validation
-                pred = cl.predicate.upper().strip()
-                if pred not in SUPPORTED_PREDICATES:
-                    pred = "INTERACTED_WITH"
 
                 # Safety check: Do not treat suspicion as proof of guilt
                 val_status = cl.validation.lower().strip()

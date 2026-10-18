@@ -358,16 +358,16 @@
     {
       "id": "ii_the_adventure_of_the_cardboar",
       "title": "II. The Adventure of the Cardboard Box",
-      "author": "ARTHER",
+      "author": "ARTHUR",
       "description": "his talents. It is, however, unfortunately impossible entirely to",
       "format": "txt",
       "source_type": "upload",
       "source_url": null,
       "status": "ready",
-      "status_message": "Candidate story graph extracted (23 characters, 5 locations) across 4 chapters.",
+      "status_message": "Knowledge graph extracted via gemini-3.5-flash-lite across 4 chapters.",
       "max_chapters": 4,
       "graph_name": "story_ii_the_adventure_of_the_cardboar",
-      "created_at": "2026-10-18T17:10:10.061718+00:00",
+      "created_at": "2026-10-18T23:23:11.984754+00:00",
       "chapters": [
         {
           "chapter_number": 1,

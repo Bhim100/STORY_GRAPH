@@ -108,6 +108,19 @@ def remove_book(book_id: str):
         raise HTTPException(status_code=500, detail=f"Failed to remove story: {exc}")
 
 
+@router.post("/books/{book_id}/extract-graph")
+def trigger_extract_graph(book_id: str):
+    """Triggers knowledge graph extraction and FalkorDB seeding for an existing book."""
+    book = get_book(book_id)
+    if not book:
+        raise HTTPException(status_code=404, detail=f"Book '{book_id}' not found in library.")
+    try:
+        updated = extract_and_seed_book_graph(book_id)
+        return updated.model_dump()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Graph extraction failed: {exc}")
+
+
 @router.post("/books")
 async def add_book(request: Request):
     """Adds a new book to the user's StoryGraph library via file upload or source URL.
