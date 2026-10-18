@@ -35,10 +35,12 @@ export function QuestionPanel({
   };
 
   const sampleQuestions = [
-    'How is Mara Voss connected to Elias Thorne?',
-    'How are Mara Voss and Dr. Halden related?',
-    'How is Jonas Reed connected to Elias?',
-    'Is Tobias Quill connected to the household?',
+    'What happened at the greenhouse?',
+    'Why was Jonas suspected?',
+    'What evidence connects Halden to the death?',
+    'How are Mara Voss and Jonas Reed connected?',
+    'Tell me about Mara Voss',
+    'Who is in the Thorne household?',
   ];
 
   const handleSelectDisambiguation = (entityName) => {

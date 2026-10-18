@@ -123,7 +123,60 @@ def test_api_ask():
     assert len(data["evidence"]) >= 1
 
 
+@requires_falkordb
+def test_api_ask_entity_profile():
+    """Verify /api/ask endpoint handles entity profile queries with evidence and relationships."""
+    res = client.post("/api/ask", json={
+        "question": "Tell me about Mara Voss",
+        "chapter": 1
+    })
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "entity_profile"
+    assert "Mara Voss" in data["answer"]
+    assert "Estate archivist" in data["answer"]
+    assert "Employment agreement" in data["answer"]
+    assert len(data["nodes"]) >= 1
+    assert len(data["relationships"]) >= 1
+    assert len(data["evidence"]) >= 1
+
+
+@requires_falkordb
+def test_api_ask_collection_household():
+    """Verify /api/ask endpoint handles collection queries with members and evidence."""
+    res = client.post("/api/ask", json={
+        "question": "Who is in the Thorne household?",
+        "chapter": 1
+    })
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "collection_query"
+    assert "Jonas Reed" in data["answer"]
+    assert len(data["members"]) == 1
+    assert data["members"][0]["name"] == "Jonas Reed"
+    assert len(data["relationships"]) == 1
+    assert len(data["evidence"]) >= 1
+    assert "Unverified membership claims exist" in data["answer"]
+
+
+
+@requires_falkordb
+def test_api_ask_manor_distinction():
+    """Verify /api/ask endpoint distinguishes manor location from household membership."""
+    res = client.post("/api/ask", json={
+        "question": "Who lives at Thorne Manor?",
+        "chapter": 1
+    })
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "collection_query"
+    assert "does not establish supported residence or employment relationships" in data["answer"]
+    assert len(data["nodes"]) == 0
+    assert len(data["members"]) == 0
+
+
 def test_api_validation_error():
     """Verify parameter validation handles invalid chapter appropriately."""
     res = client.get("/api/graph?chapter=0")
     assert res.status_code == 422
+

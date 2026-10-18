@@ -414,7 +414,7 @@
       "excerpt": "Employment agreement signed between Elias Thorne and Mara Voss.",
       "source_chapter": 1,
       "reveal_chapter": 1,
-      "supports": ["cl_mara_employed", "cl_mara_household"]
+      "supports": ["cl_mara_employed"]
     },
     {
       "id": "evi_family_tree",
@@ -423,7 +423,7 @@
       "excerpt": "Family bible listing Ines Calloway as daughter of Clara Thorne, and Edith as Elias's elder sister.",
       "source_chapter": 1,
       "reveal_chapter": 1,
-      "supports": ["cl_ines_niece", "cl_edith_sister", "cl_ines_household", "cl_edith_household", "cl_elias_household"]
+      "supports": ["cl_ines_niece", "cl_edith_sister"]
     },
     {
       "id": "evi_clinic_card",

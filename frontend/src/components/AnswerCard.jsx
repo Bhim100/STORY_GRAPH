@@ -1,5 +1,17 @@
 import React from 'react';
-import { CheckCircle2, AlertTriangle, HelpCircle, XCircle, FileText, ChevronRight, X } from 'lucide-react';
+import {
+  CheckCircle2,
+  AlertTriangle,
+  HelpCircle,
+  XCircle,
+  FileText,
+  ChevronRight,
+  X,
+  User,
+  List,
+  Calendar,
+  ShieldAlert,
+} from 'lucide-react';
 
 export function AnswerCard({ result, onDismiss, onSelectNode }) {
   if (!result) return null;
@@ -13,6 +25,34 @@ export function AnswerCard({ result, onDismiss, onSelectNode }) {
           <span className="badge badge-amber" style={{ fontSize: '0.75rem' }}>
             <CheckCircle2 size={13} />
             Verified Connection
+          </span>
+        );
+      case 'entity_profile':
+        return (
+          <span className="badge badge-amber" style={{ fontSize: '0.75rem' }}>
+            <User size={13} />
+            Entity Profile
+          </span>
+        );
+      case 'collection_query':
+        return (
+          <span className="badge badge-amber" style={{ fontSize: '0.75rem' }}>
+            <List size={13} />
+            Collection Query
+          </span>
+        );
+      case 'event_evidence':
+        return (
+          <span className="badge badge-amber" style={{ fontSize: '0.75rem' }}>
+            <Calendar size={13} />
+            Event / Evidence
+          </span>
+        );
+      case 'culprit_query':
+        return (
+          <span className="badge badge-amber" style={{ fontSize: '0.75rem' }}>
+            <ShieldAlert size={13} />
+            Culprit Query
           </span>
         );
       case 'no_path':
@@ -36,6 +76,13 @@ export function AnswerCard({ result, onDismiss, onSelectNode }) {
             Unresolved Entity
           </span>
         );
+      case 'unsupported_question':
+        return (
+          <span className="badge" style={{ fontSize: '0.75rem', borderColor: '#ef4444', color: '#f87171' }}>
+            <XCircle size={13} />
+            Unsupported Query
+          </span>
+        );
       default:
         return (
           <span className="badge" style={{ fontSize: '0.75rem' }}>
@@ -47,7 +94,9 @@ export function AnswerCard({ result, onDismiss, onSelectNode }) {
 
   return (
     <div className="dossier-card" style={{
-      borderLeft: status === 'answered' ? '4px solid var(--accent-amber)' : '4px solid var(--border-subtle)',
+      borderLeft: ['answered', 'entity_profile', 'collection_query', 'event_evidence', 'culprit_query'].includes(status)
+        ? '4px solid var(--accent-amber)'
+        : '4px solid var(--border-subtle)',
       display: 'flex',
       flexDirection: 'column',
       gap: '0.75rem',
@@ -60,6 +109,11 @@ export function AnswerCard({ result, onDismiss, onSelectNode }) {
           {resolved_entities.length === 2 && (
             <span style={{ fontSize: '0.75rem', color: 'var(--text-ivory-muted)', fontFamily: 'var(--font-mono)' }}>
               {resolved_entities[0].name} &harr; {resolved_entities[1].name}
+            </span>
+          )}
+          {resolved_entities.length === 1 && (
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-ivory-muted)', fontFamily: 'var(--font-mono)' }}>
+              {resolved_entities[0].name}
             </span>
           )}
         </div>
