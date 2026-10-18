@@ -959,32 +959,6 @@ def extract_candidate_dataset_from_text(
                             role=role
                         )
 
-    # Fallback claim if book has no claims detected
-    if not claims and characters and locations:
-        first_c = list(characters.values())[0]
-        first_l = list(locations.values())[0]
-        cid = f"cl_{book_id}_1"
-        claims.append(Claim(
-            id=cid,
-            story_id=book_id,
-            kind="PRESENT_AT",
-            subject=first_c.id,
-            object=first_l.id,
-            role="visitor",
-            text=f"{first_c.name} is situated at {first_l.name}.",
-            reveal_chapter=1,
-            validation="alleged"
-        ))
-        evidence_list.append(Evidence(
-            id=f"evi_{book_id}_1",
-            story_id=book_id,
-            kind="document",
-            excerpt=chapters_data[0]["content"][:200],
-            source_chapter=1,
-            reveal_chapter=1,
-            supports=[cid]
-        ))
-
     dataset = StoryDataset(
         story_id=book_id,
         title=title,
@@ -1246,8 +1220,10 @@ def import_book_content(
 
     if extract_graph:
         try:
+            from app.llm.extractor import run_story_extraction_pipeline
             from app.graph.seed import seed_story_to_falkordb
-            candidate_dataset = extract_candidate_dataset_from_text(
+
+            extraction_res = run_story_extraction_pipeline(
                 title=title,
                 author=author,
                 description=description,
@@ -1255,12 +1231,9 @@ def import_book_content(
                 book_id=book_id,
             )
             graph_name = f"story_{book_id}"
-            seed_story_to_falkordb(candidate_dataset, graph_name=graph_name)
+            seed_story_to_falkordb(extraction_res.dataset, graph_name=graph_name)
             status = "ready"
-            status_msg = (
-                f"Candidate story graph extracted ({len(candidate_dataset.characters)} characters, "
-                f"{len(candidate_dataset.locations)} locations) across {num_chapters} chapters."
-            )
+            status_msg = extraction_res.status_message
         except Exception as exc:
             status = "import_pending"
             status_msg = f"Text parsed into {num_chapters} chapters; candidate graph extraction deferred: {exc}"
@@ -1300,8 +1273,10 @@ def extract_and_seed_book_graph(book_id: str) -> BookMetadata:
     with open(chapters_file, "r", encoding="utf-8") as f:
         chapters_data = json.load(f).get("chapters", [])
 
+    from app.llm.extractor import run_story_extraction_pipeline
     from app.graph.seed import seed_story_to_falkordb
-    candidate_dataset = extract_candidate_dataset_from_text(
+
+    extraction_res = run_story_extraction_pipeline(
         title=book.title,
         author=book.author,
         description=book.description,
@@ -1309,13 +1284,10 @@ def extract_and_seed_book_graph(book_id: str) -> BookMetadata:
         book_id=book_id,
     )
     graph_name = f"story_{book_id}"
-    seed_story_to_falkordb(candidate_dataset, graph_name=graph_name)
+    seed_story_to_falkordb(extraction_res.dataset, graph_name=graph_name)
 
     book.status = "ready"
     book.graph_name = graph_name
-    book.status_message = (
-        f"Candidate story graph extracted ({len(candidate_dataset.characters)} characters, "
-        f"{len(candidate_dataset.locations)} locations) across {book.max_chapters} chapters."
-    )
+    book.status_message = extraction_res.status_message
     save_book(book)
     return book

@@ -22,7 +22,7 @@ from app.importer import (
     extract_and_seed_book_graph,
 )
 from app.llm.agent import answer_question
-from app.storage import get_all_books, get_book, get_book_sources_dir
+from app.storage import get_all_books, get_book, get_book_sources_dir, delete_book
 
 router = APIRouter(prefix="/api")
 
@@ -87,6 +87,25 @@ def get_book_by_id(book_id: str):
     if not book:
         raise HTTPException(status_code=404, detail=f"Book '{book_id}' not found in library.")
     return book.model_dump()
+
+
+@router.delete("/books/{book_id}")
+def remove_book(book_id: str):
+    """Deletes a book from the library catalog, source directory, and drops its FalkorDB graph."""
+    if book_id == "glass_orchard":
+        raise HTTPException(status_code=400, detail="Cannot delete the default baseline story 'The Glass Orchard'.")
+    book = get_book(book_id)
+    if not book:
+        raise HTTPException(status_code=404, detail=f"Book '{book_id}' not found in library.")
+    try:
+        success = delete_book(book_id)
+        if not success:
+            raise HTTPException(status_code=404, detail=f"Book '{book_id}' not found.")
+        return {"status": "success", "message": f"Story '{book.title}' was successfully removed."}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to remove story: {exc}")
 
 
 @router.post("/books")
@@ -277,6 +296,27 @@ def extract_graph_for_book(book_id: str):
         raise HTTPException(status_code=404, detail=str(exc))
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Graph extraction failed: {exc}")
+
+
+@router.delete("/books/{book_id}")
+def remove_book(book_id: str):
+    """Deletes a story from the library catalog, removes its files, and drops its graph."""
+    if book_id == "glass_orchard":
+        raise HTTPException(status_code=400, detail="The default 'The Glass Orchard' mystery cannot be removed.")
+
+    book = get_book(book_id)
+    if not book:
+        raise HTTPException(status_code=404, detail=f"Book '{book_id}' not found in library.")
+
+    try:
+        success = delete_book(book_id)
+        if not success:
+            raise HTTPException(status_code=404, detail=f"Failed to delete book '{book_id}'.")
+        return {"status": "deleted", "book_id": book_id, "message": f"Story '{book.title}' was successfully removed."}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to remove book: {exc}")
 
 
 # ==============================================================================

@@ -110,3 +110,41 @@ def get_book_sources_dir(book_id: str) -> Path:
     book_dir = SOURCES_DIR / book_id
     book_dir.mkdir(parents=True, exist_ok=True)
     return book_dir
+
+
+def delete_book(book_id: str) -> bool:
+    """Removes a book from the library catalog, deletes its sources directory, and drops its FalkorDB graph."""
+    if book_id == "glass_orchard":
+        raise ValueError("Cannot remove the default bundled 'The Glass Orchard' mystery.")
+
+    init_catalog()
+    books = get_all_books()
+    book_to_delete = next((b for b in books if b.id == book_id), None)
+    if not book_to_delete:
+        return False
+
+    # 1. Remove from catalog.json
+    remaining_books = [b for b in books if b.id != book_id]
+    with open(CATALOG_PATH, "w", encoding="utf-8") as f:
+        json.dump({"books": [b.model_dump() for b in remaining_books]}, f, indent=2)
+
+    # 2. Remove sources directory
+    book_dir = SOURCES_DIR / book_id
+    if book_dir.exists():
+        import shutil
+        try:
+            shutil.rmtree(book_dir)
+        except Exception:
+            pass
+
+    # 3. Clean FalkorDB graph
+    graph_name = book_to_delete.graph_name or f"story_{book_id}"
+    try:
+        from app.db import get_falkordb_client
+        client = get_falkordb_client()
+        g = client.select_graph(graph_name)
+        g.delete()
+    except Exception:
+        pass
+
+    return True

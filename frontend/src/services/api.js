@@ -42,6 +42,17 @@ export async function extractStoryGraph(bookId) {
   return data;
 }
 
+export async function deleteBook(bookId) {
+  const res = await fetch(`${BASE_URL}/api/books/${encodeURIComponent(bookId)}`, {
+    method: 'DELETE',
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || `Failed to remove story (${res.status})`);
+  }
+  return data;
+}
+
 export async function addBook(bookData) {
   let options = {};
   if (bookData instanceof FormData) {

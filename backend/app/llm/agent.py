@@ -171,26 +171,24 @@ def answer_question(question: str, chapter: int) -> Dict[str, Any]:
             return get_culprit_query(question, route.get("resolved_entities", []), chapter)
 
         # Two-Entity Connection Handler (Preserve existing connection route)
-        resolved = route.get("resolved_entities", [])
-        if len(resolved) < 2:
-            interpretation = interpret_question(question, chapter)
-            status = interpretation.get("status")
+        interpretation = interpret_question(question, chapter)
+        status = interpretation.get("status")
 
-            if status in ("clarification_needed", "unresolved_entity"):
-                return {
-                    "answer": interpretation.get("answer", "Clarification needed to proceed."),
-                    "status": status,
-                    "question_type": QuestionType.CONNECTION,
-                    "resolved_entities": interpretation.get("resolved_entities", []),
-                    "entities": interpretation.get("entities", []),
-                    "ambiguous_options": interpretation.get("ambiguous_options", []),
-                    "nodes": [],
-                    "relationships": [],
-                    "evidence": [],
-                    "path": None,
-                }
+        if status in ("clarification_needed", "unresolved_entity"):
+            return {
+                "answer": interpretation.get("answer", "Clarification needed to proceed."),
+                "status": status,
+                "question_type": QuestionType.CONNECTION,
+                "resolved_entities": interpretation.get("resolved_entities", []),
+                "entities": interpretation.get("entities", []),
+                "ambiguous_options": interpretation.get("ambiguous_options", []),
+                "nodes": [],
+                "relationships": [],
+                "evidence": [],
+                "path": None,
+            }
 
-            resolved = interpretation.get("resolved_entities", [])
+        resolved = interpretation.get("resolved_entities", [])
         if len(resolved) < 2:
             return {
                 "answer": "Could not identify two distinct story entities to connect in this question.",

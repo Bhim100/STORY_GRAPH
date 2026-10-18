@@ -332,3 +332,50 @@ Sir Charles Baskerville was found dead near the yew alley.
     assert book["author"] == "Arthur Conan Doyle"
     assert book["max_chapters"] == 2
 
+
+def test_delete_book_protected_glass_orchard():
+    """Verify default story 'glass_orchard' cannot be deleted."""
+    res = client.delete("/api/books/glass_orchard")
+    assert res.status_code == 400
+    assert "Cannot delete the default baseline story" in res.json()["detail"]
+
+
+def test_delete_book_not_found():
+    """Verify deleting a non-existent story returns 404."""
+    res = client.delete("/api/books/non_existent_book_id")
+    assert res.status_code == 404
+
+
+def test_delete_book_success():
+    """Verify creating a story and deleting it successfully removes it from the catalog."""
+    sample_text = """A Study in Scarlet
+by Arthur Conan Doyle
+
+Chapter 1: Mr. Sherlock Holmes
+Holmes and Watson meet for the first time.
+"""
+    # 1. Create book
+    create_res = client.post("/api/books", json={
+        "title": "A Study in Scarlet",
+        "author": "Arthur Conan Doyle",
+        "source_type": "upload",
+        "format": "txt",
+        "content": sample_text,
+    })
+    assert create_res.status_code == 200
+    book_id = create_res.json()["id"]
+
+    # 2. Verify book exists in library
+    get_res = client.get(f"/api/books/{book_id}")
+    assert get_res.status_code == 200
+
+    # 3. Delete book
+    del_res = client.delete(f"/api/books/{book_id}")
+    assert del_res.status_code == 200
+    assert del_res.json()["status"] == "success"
+
+    # 4. Verify book is no longer found
+    get_after = client.get(f"/api/books/{book_id}")
+    assert get_after.status_code == 404
+
+
