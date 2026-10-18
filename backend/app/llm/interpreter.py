@@ -2,20 +2,24 @@
 import json
 import re
 from typing import Any, Dict, List, Optional, Tuple
-from app.config import OPENAI_API_KEY, OPENAI_MODEL
+from app.config import OPENAI_API_KEY, OPENAI_MODEL, get_llm_client
 from app.graph.explorer import get_visible_entities, resolve_entity
 
 
 def _extract_entities_via_llm(question: str, chapter: int) -> Optional[Tuple[str, str]]:
-    """Extracts entity mention strings from a natural language question using OpenAI tool calling."""
-    if not OPENAI_API_KEY:
-        return None
+    """Extracts entity mention strings from a natural language question using LLM tool calling."""
+    client, model = get_llm_client()
+    if not client:
+        if OPENAI_API_KEY:
+            from openai import OpenAI
+            client = OpenAI(api_key=OPENAI_API_KEY)
+            model = OPENAI_MODEL
+        else:
+            return None
 
     try:
-        from openai import OpenAI
-        client = OpenAI(api_key=OPENAI_API_KEY)
         response = client.chat.completions.create(
-            model=OPENAI_MODEL,
+            model=model,
             messages=[
                 {
                     "role": "system",

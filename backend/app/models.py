@@ -67,3 +67,44 @@ class StoryDataset(BaseModel):
     events: List[Event] = Field(default_factory=list)
     claims: List[Claim] = Field(default_factory=list)
     evidence: List[Evidence] = Field(default_factory=list)
+
+
+class ChapterMetadata(BaseModel):
+    chapter_number: int
+    title: str
+    word_count: int = 0
+    char_count: int = 0
+    preview: str = ""
+    candidate_entities: List[str] = Field(default_factory=list)
+
+
+class BookMetadata(BaseModel):
+    id: str
+    title: str
+    author: str
+    description: str = ""
+    format: str = "txt"  # txt, json, epub, pdf
+    source_type: str = "upload"  # upload, url, bundled
+    source_url: Optional[str] = None
+    status: str = "ready"  # ready, import_pending, parsing_completed, error, unsupported_format
+    status_message: Optional[str] = None
+    max_chapters: int = 1
+    graph_name: Optional[str] = None
+    created_at: Optional[str] = None
+    chapters: List[ChapterMetadata] = Field(default_factory=list)
+
+
+class AddBookRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    author: str = Field(min_length=1, max_length=200)
+    description: Optional[str] = Field(default="", max_length=2000)
+    source_type: Literal["upload", "url"] = "upload"
+    format: str = "txt"
+    source_url: Optional[str] = None
+    content: Optional[str] = None
+    extract_graph: Optional[bool] = False
+
+
+class BookListResponse(BaseModel):
+    books: List[BookMetadata]
+

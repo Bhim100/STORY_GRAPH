@@ -1,7 +1,7 @@
 """Grounded answer generation using only verified graph paths and visible evidence."""
 import json
 from typing import Any, Dict, List
-from app.config import OPENAI_API_KEY, OPENAI_MODEL
+from app.config import OPENAI_API_KEY, OPENAI_MODEL, get_llm_client
 
 
 def _format_deterministic_answer(path: Dict[str, Any], chapter: int) -> str:
@@ -87,13 +87,16 @@ def generate_grounded_answer(question: str, path: Dict[str, Any], chapter: int) 
     if not path or not path.get("nodes"):
         return f"I can't establish a supported connection from information revealed by Chapter {chapter}."
 
-    if not OPENAI_API_KEY:
-        return _format_deterministic_answer(path, chapter)
+    client, model = get_llm_client()
+    if not client:
+        if OPENAI_API_KEY:
+            from openai import OpenAI
+            client = OpenAI(api_key=OPENAI_API_KEY)
+            model = OPENAI_MODEL
+        else:
+            return _format_deterministic_answer(path, chapter)
 
     try:
-        from openai import OpenAI
-        client = OpenAI(api_key=OPENAI_API_KEY)
-
         facts = [
             {
                 "claim_id": e.get("claim_id"),
@@ -126,18 +129,24 @@ def generate_grounded_answer(question: str, path: Dict[str, Any], chapter: int) 
         }
 
         completion = client.chat.completions.create(
-            model=OPENAI_MODEL,
+            model=model,
             messages=[
                 {
                     "role": "system",
                     "content": (
                         "You are StoryGraph, a spoiler-safe mystery story assistant. "
-                        "Explain ONLY the connection established by the provided verified graph path and visible evidence. "
+                        "Explain ONLY the connection established by the provided verified graph path and visible evidence.\n\n"
                         "CRITICAL RULES:\n"
                         "1. Do NOT add plot details, characters, or theories not present in the verified data.\n"
                         "2. Do NOT reveal or hint at any events beyond the chapter boundary.\n"
                         "3. Explicitly cite the evidence supporting each relationship.\n"
-                        "4. Keep the answer concise and direct."
+                        "4. Keep the answer concise, direct, and well-grounded.\n\n"
+                        "FORMATTING RULES:\n"
+                        "- Organize your response with clear paragraph breaks (double newlines).\n"
+                        "- When presenting intermediate steps or supporting evidence, use structured bullet points on their own separate lines:\n"
+                        "  * **[Step or Role]:** [Description]\n"
+                        "    > *Evidence:* \"[Supporting quote]\" (Ch. X)\n"
+                        "- Never bunch multiple bullet points onto a single line."
                     ),
                 },
                 {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
@@ -151,4 +160,118 @@ def generate_grounded_answer(question: str, path: Dict[str, Any], chapter: int) 
     except Exception:
         # Graceful fallback on LLM error
         return _format_deterministic_answer(path, chapter)
+
+
+def generate_grounded_profile_answer(profile_data: Dict[str, Any], question: str, chapter: int) -> str:
+    """Generates an articulate investigator's profile summary using the LLM when available."""
+    client, model = get_llm_client()
+    default_ans = profile_data.get("answer", "")
+    if not client:
+        return default_ans
+
+    try:
+        node = profile_data.get("node", {})
+        payload = {
+            "entity": {
+                "name": node.get("name"),
+                "kind": node.get("kind"),
+                "role": node.get("role"),
+                "aliases": node.get("aliases", []),
+                "first_revealed_chapter": node.get("reveal_chapter", 1),
+            },
+            "reader_current_chapter": chapter,
+            "visible_relationships": profile_data.get("connections", []),
+            "supporting_evidence": [
+                {
+                    "claim": ev.get("claim"),
+                    "kind": ev.get("kind"),
+                    "excerpt": ev.get("excerpt"),
+                    "source_chapter": ev.get("source_chapter"),
+                }
+                for ev in profile_data.get("evidence", [])
+            ],
+            "question": question,
+        }
+
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are StoryGraph, an intelligent, spoiler-safe mystery story assistant. "
+                        "Synthesize an articulate, clear investigator's profile of this character/entity up to the reader's current chapter.\n\n"
+                        "CRITICAL RULES:\n"
+                        "1. Only use facts, connections, and evidence provided in the JSON data.\n"
+                        "2. Do NOT invent or reveal any events beyond the reader's chapter.\n"
+                        "3. Naturally weave in key supporting quotes and relationships in a structured, readable way.\n\n"
+                        "FORMATTING RULES:\n"
+                        "- Begin with a direct 1-2 sentence summary answering the question.\n"
+                        "- Follow with a structured breakdown using clean markdown headings and bullet points separated by double newlines.\n"
+                        "- Place each key role or relationship on its OWN distinct bullet point line:\n"
+                        "  * **[Role / Attribute]:** [Entity or Description]\n"
+                        "    > *Evidence:* \"[Direct quote excerpt]\" (Ch. X)\n"
+                        "- NEVER place multiple bullet points on the same line or run them together."
+                    ),
+                },
+                {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
+            ],
+            temperature=0.0,
+        )
+        ans = completion.choices[0].message.content
+        if ans and ans.strip():
+            return ans.strip()
+        return default_ans
+    except Exception:
+        return default_ans
+
+
+def generate_grounded_collection_answer(collection_res: Dict[str, Any], question: str, chapter: int) -> str:
+    """Synthesizes a fluent, grounded narrative answer for collection queries using the LLM when available."""
+    default_ans = collection_res.get("answer", "")
+    client, model = get_llm_client()
+    if not client:
+        return default_ans
+
+    try:
+        payload = {
+            "question": question,
+            "reader_current_chapter": chapter,
+            "entities": collection_res.get("nodes", []),
+            "investigators": collection_res.get("investigators", []),
+            "relationships": collection_res.get("relationships", []),
+            "evidence": collection_res.get("evidence", []),
+        }
+
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are StoryGraph, a spoiler-safe mystery story assistant. "
+                        "Answer the reader's question about story characters, members, or investigators up to their current chapter.\n\n"
+                        "CRITICAL RULES:\n"
+                        "1. Clearly distinguish each character's specific role (e.g. official police inspector vs consulting detective).\n"
+                        "2. Explicitly cite the evidence excerpt supporting each person.\n"
+                        "3. Do NOT reveal or invent any plot details beyond the reader's current chapter.\n"
+                        "4. Keep the explanation direct, professional, and clear.\n\n"
+                        "FORMATTING RULES:\n"
+                        "- Begin with a direct summary of the individuals identified.\n"
+                        "- Format each person on their OWN distinct bullet point line separated by blank lines:\n"
+                        "  * **[Name]** ([Specific Role or Title]): [Brief description of their role]\n"
+                        "    > *Evidence:* \"[Direct quote excerpt]\" (Ch. X)\n"
+                        "- Never bunch multiple bullet points onto a single line."
+                    ),
+                },
+                {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
+            ],
+            temperature=0.0,
+        )
+        ans = completion.choices[0].message.content
+        if ans and ans.strip():
+            return ans.strip()
+        return default_ans
+    except Exception:
+        return default_ans
 

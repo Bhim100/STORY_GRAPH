@@ -1,4 +1,4 @@
-"""FastAPI application entrypoint for StoryGraph."""
+"""FastAPI application entrypoint for StoryGraph (Multi-book library enabled)."""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router

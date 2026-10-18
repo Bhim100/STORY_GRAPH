@@ -1,7 +1,9 @@
 import React from 'react';
-import { Database, ShieldCheck, RefreshCw, Layers } from 'lucide-react';
+import { Database, ShieldCheck, RefreshCw, Layers, ArrowLeft, BookOpen, Clock } from 'lucide-react';
 
-export function Header({ story, chapter, dbStatus, onReset, onRefresh, loading }) {
+export function Header({ story, chapter, dbStatus, onReset, onRefresh, loading, onBackToLibrary }) {
+  const isPending = story?.status === 'import_pending';
+
   return (
     <header style={{
       display: 'flex',
@@ -13,6 +15,26 @@ export function Header({ story, chapter, dbStatus, onReset, onRefresh, loading }
       zIndex: 20,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        {/* Back to Library Navigation Action */}
+        {onBackToLibrary && (
+          <button
+            onClick={onBackToLibrary}
+            className="btn"
+            style={{
+              padding: '0.4rem 0.75rem',
+              fontSize: '0.775rem',
+              backgroundColor: 'var(--bg-tertiary)',
+              borderColor: 'var(--border-subtle)',
+            }}
+            title="Return to StoryGraph Library"
+            aria-label="Return to StoryGraph Library"
+          >
+            <ArrowLeft size={14} />
+            <BookOpen size={14} />
+            Library
+          </button>
+        )}
+
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <div style={{
             width: '28px',
@@ -81,10 +103,17 @@ export function Header({ story, chapter, dbStatus, onReset, onRefresh, loading }
           {dbStatus === 'ok' ? 'FalkorDB Connected' : 'Connecting to FalkorDB...'}
         </div>
 
-        <div className="badge badge-amber" style={{ fontSize: '0.7rem' }}>
-          <ShieldCheck size={12} />
-          Spoiler Boundary: Ch. {chapter}
-        </div>
+        {isPending ? (
+          <div className="badge" style={{ fontSize: '0.7rem', color: 'var(--accent-amber-light)', backgroundColor: 'var(--accent-amber-bg)', border: '1px solid rgba(217, 119, 6, 0.3)' }}>
+            <Clock size={12} />
+            Graph Pending • Ch. {chapter}
+          </div>
+        ) : (
+          <div className="badge badge-amber" style={{ fontSize: '0.7rem' }}>
+            <ShieldCheck size={12} />
+            Spoiler Boundary: Ch. {chapter}
+          </div>
+        )}
 
         <button
           onClick={onRefresh}

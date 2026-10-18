@@ -144,20 +144,18 @@ def test_mock_llm_interpretation_and_generation():
     mock_completion_answer = MagicMock()
     mock_completion_answer.choices = [mock_choice_answer]
 
-    with patch("app.llm.interpreter.OPENAI_API_KEY", "mock-key"):
-        with patch("app.llm.generator.OPENAI_API_KEY", "mock-key"):
-            with patch("openai.OpenAI") as mock_openai_cls:
-                mock_client = MagicMock()
-                mock_openai_cls.return_value = mock_client
-                mock_client.chat.completions.create.side_effect = [
-                    mock_completion_select,
-                    mock_completion_answer,
-                ]
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.side_effect = [
+        mock_completion_select,
+        mock_completion_answer,
+    ]
 
-                res = answer_question("Explain the link between Mara and Elias Thorne", chapter=1)
-                assert res["status"] == "answered"
-                assert "Mara Voss is employed" in res["answer"]
-                assert len(res["relationships"]) == 1
+    with patch("app.llm.interpreter.get_llm_client", return_value=(mock_client, "mock-model")):
+        with patch("app.llm.generator.get_llm_client", return_value=(mock_client, "mock-model")):
+            res = answer_question("Explain the link between Mara and Elias Thorne", chapter=1)
+            assert res["status"] == "answered"
+            assert "Mara Voss is employed" in res["answer"]
+            assert len(res["relationships"]) == 1
 
 
 def test_invalid_chapter_boundary():

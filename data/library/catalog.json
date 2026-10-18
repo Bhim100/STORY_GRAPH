@@ -1,0 +1,425 @@
+{
+  "books": [
+    {
+      "id": "glass_orchard",
+      "title": "The Glass Orchard",
+      "author": "Elias Thorne Estate Archive",
+      "description": "An aristocratic greenhouse estate murder mystery running across 8 chapters.",
+      "format": "json",
+      "source_type": "bundled",
+      "source_url": null,
+      "status": "ready",
+      "status_message": "Complete knowledge graph loaded with 8 chapters of spoiler boundaries.",
+      "max_chapters": 8,
+      "graph_name": "glass_orchard",
+      "created_at": "2026-10-18T00:00:00Z",
+      "chapters": [
+        {
+          "chapter_number": 1,
+          "title": "Chapter 1",
+          "word_count": 0,
+          "char_count": 0,
+          "preview": "Glass Orchard estate investigation.",
+          "candidate_entities": []
+        },
+        {
+          "chapter_number": 2,
+          "title": "Chapter 2",
+          "word_count": 0,
+          "char_count": 0,
+          "preview": "Glass Orchard estate investigation.",
+          "candidate_entities": []
+        },
+        {
+          "chapter_number": 3,
+          "title": "Chapter 3",
+          "word_count": 0,
+          "char_count": 0,
+          "preview": "Glass Orchard estate investigation.",
+          "candidate_entities": []
+        },
+        {
+          "chapter_number": 4,
+          "title": "Chapter 4",
+          "word_count": 0,
+          "char_count": 0,
+          "preview": "Glass Orchard estate investigation.",
+          "candidate_entities": []
+        },
+        {
+          "chapter_number": 5,
+          "title": "Chapter 5",
+          "word_count": 0,
+          "char_count": 0,
+          "preview": "Glass Orchard estate investigation.",
+          "candidate_entities": []
+        },
+        {
+          "chapter_number": 6,
+          "title": "Chapter 6",
+          "word_count": 0,
+          "char_count": 0,
+          "preview": "Glass Orchard estate investigation.",
+          "candidate_entities": []
+        },
+        {
+          "chapter_number": 7,
+          "title": "Chapter 7",
+          "word_count": 0,
+          "char_count": 0,
+          "preview": "Glass Orchard estate investigation.",
+          "candidate_entities": []
+        },
+        {
+          "chapter_number": 8,
+          "title": "Chapter 8",
+          "word_count": 0,
+          "char_count": 0,
+          "preview": "Glass Orchard estate investigation.",
+          "candidate_entities": []
+        }
+      ]
+    },
+    {
+      "id": "the_memoirs_of_sherlock_holmes_1",
+      "title": "The Memoirs of Sherlock Holmes",
+      "author": "Arthur Conan Doyle",
+      "description": "The Project Gutenberg eBook of The Memoirs of Sherlock Holmes",
+      "format": "txt",
+      "source_type": "upload",
+      "source_url": null,
+      "status": "ready",
+      "status_message": "Candidate story graph extracted (163 characters, 35 locations) across 12 chapters.",
+      "max_chapters": 12,
+      "graph_name": "story_the_memoirs_of_sherlock_holmes_1",
+      "created_at": "2026-10-18T15:31:33.828435+00:00",
+      "chapters": [
+        {
+          "chapter_number": 1,
+          "title": "Chapter 1",
+          "word_count": 9853,
+          "char_count": 54008,
+          "preview": "The Project Gutenberg eBook of The Memoirs of Sherlock Holmes This eBook is for the use of anyone anywhere in the United States and most other parts of the world at no cost and with almost no restrict...",
+          "candidate_entities": [
+            "Dr. Watson",
+            "Inspector Gregory",
+            "Lord Backwater",
+            "Lord Singleford",
+            "Mr. Brown",
+            "Mr. Heath Newton",
+            "Mr. Holmes",
+            "Mr. John Straker",
+            "Mr. Silas Brown",
+            "Mrs. Straker"
+          ]
+        },
+        {
+          "chapter_number": 2,
+          "title": "Chapter 2",
+          "word_count": 9853,
+          "char_count": 52145,
+          "preview": "his statement and so give a false impression of the problem, or he must use matter which chance, and not choice, has provided him with. With this short preface I shall turn to my notes of what proved...",
+          "candidate_entities": [
+            "Inspector Montgomery",
+            "Miss Cushing",
+            "Miss Sarah",
+            "Miss Sarah Cushing",
+            "Miss Susan Cushing",
+            "Mr. Browner",
+            "Mr. Holmes",
+            "Mr. Lestrade",
+            "Mrs. Browner",
+            "Shadwell Police Station"
+          ]
+        },
+        {
+          "chapter_number": 3,
+          "title": "Chapter 3",
+          "word_count": 9853,
+          "char_count": 51432,
+          "preview": "to do and my whole life seems to have gone to pieces.\u201d \u201cYou wish to employ me as a consulting detective?\u201d \u201cNot that only. I want your opinion as a judicious man\u2014as a man of the world. I want to know w...",
+          "candidate_entities": [
+            "Dr. Watson",
+            "Mr. Farquhar",
+            "Mr. Grant Munro",
+            "Mr. Hall Pycroft",
+            "Mr. Harry Pinner",
+            "Mr. Holmes",
+            "Mr. Munro",
+            "Mr. Pinner",
+            "Mr. Pycroft",
+            "Mrs. Hebron",
+            "Mrs. Watson"
+          ]
+        },
+        {
+          "chapter_number": 4,
+          "title": "Chapter 4",
+          "word_count": 9853,
+          "char_count": 52332,
+          "preview": "Music Hall in the evening would do you no harm after your labours.\u2019 He laughed as he spoke, and I saw with a thrill that his second tooth upon the left-hand side had been very badly stuffed with gold....",
+          "candidate_entities": [
+            "Constable Pollock",
+            "Dr. Fordham",
+            "Dr. Watson",
+            "Mr. Arthur Harry",
+            "Mr. Beddoes",
+            "Mr. Hall Pycroft",
+            "Mr. Harris",
+            "Mr. Holmes",
+            "Mr. Pinner",
+            "Mr. Price",
+            "Mr. Pycroft",
+            "Mr. Sherlock Holmes"
+          ]
+        },
+        {
+          "chapter_number": 5,
+          "title": "Chapter 5",
+          "word_count": 9853,
+          "char_count": 52990,
+          "preview": "to our sharing the fate of the prisoners, but at last he said that if we wished we might take a boat and go. We jumped at the offer, for we were already sick of these bloodthirsty doings, and we saw t...",
+          "candidate_entities": [
+            "Baron Maupertuis",
+            "Manor House",
+            "Mr. Holmes",
+            "Mr. Musgrave",
+            "Mr. Sherlock Holmes",
+            "Sir Ralph Musgrave"
+          ]
+        },
+        {
+          "chapter_number": 6,
+          "title": "Chapter 6",
+          "word_count": 9853,
+          "char_count": 53683,
+          "preview": "last parish in England to which the thief or thieves would be likely to turn their attention\u2014which shows that I have still much to learn.\u201d \u201cI fancy it\u2019s some local practitioner,\u201d said the Colonel. \u201cIn...",
+          "candidate_entities": [
+            "Inspector Forrester",
+            "Miss Morrison",
+            "Miss Nancy Devoy",
+            "Mr. Acton",
+            "Mr. Alec",
+            "Mr. Alec Cunningham",
+            "Mr. Cunningham",
+            "Mr. Holmes",
+            "Mrs. Barclay"
+          ]
+        },
+        {
+          "chapter_number": 7,
+          "title": "Chapter 7",
+          "word_count": 9853,
+          "char_count": 53197,
+          "preview": "her denial, that she must know something of the matter. \u201cMy first conjecture was, that possibly there had been some passages between this young lady and the old soldier, which the former had now confe...",
+          "candidate_entities": [
+            "Doctor Percy Trevelyan",
+            "Dr. Percy Trevelyan",
+            "Dr. Trevelyan",
+            "Lady Day",
+            "Miss Morrison",
+            "Mr. Blessington",
+            "Mr. Henry Wood",
+            "Mr. Holmes",
+            "Mr. Lanner",
+            "Mr. Sherlock Holmes",
+            "Mrs. Barclay"
+          ]
+        },
+        {
+          "chapter_number": 8,
+          "title": "Chapter 8",
+          "word_count": 9853,
+          "char_count": 53533,
+          "preview": "to his own people. I had come to believe that he was an orphan with no relatives living, but one day, to my very great surprise, he began to talk to me about his brother. It was after tea on a summer...",
+          "candidate_entities": [
+            "Foreign Office",
+            "Inspector Gregson",
+            "Lord Holdhurst",
+            "Manor House",
+            "Mr. Harrison",
+            "Mr. Holmes",
+            "Mr. Latimer",
+            "Mr. Melas",
+            "Mr. Mycroft Holmes",
+            "Mr. Phelps",
+            "Mr. Sherlock Holmes"
+          ]
+        },
+        {
+          "chapter_number": 9,
+          "title": "Chapter 9",
+          "word_count": 9853,
+          "char_count": 52846,
+          "preview": "clock. It was quarter to ten.\u201d \u201cThat is of enormous importance,\u201d said Holmes, making a note upon his shirt-cuff. \u201cThe night was very dark, and a thin, warm rain was falling. There was no one in Charle...",
+          "candidate_entities": [
+            "Dr. Ferrier",
+            "Foreign Office",
+            "Lord Holdhurst",
+            "Miss Harrison",
+            "Mr. Forbes",
+            "Mr. Holmes",
+            "Mr. Joseph Harrison",
+            "Mr. Percy Phelps",
+            "Mr. Phelps",
+            "Mr. Sherlock Holmes",
+            "Mrs. Hudson",
+            "Mrs. Tangey"
+          ]
+        },
+        {
+          "chapter_number": 10,
+          "title": "Chapter 10",
+          "word_count": 9856,
+          "char_count": 55452,
+          "preview": "served by its suppression. As far as I know, there have been only three accounts in the public press: that in the _Journal de Gen\u00e8ve_ on May 6th, 1891, the Reuter\u2019s despatch in the English papers on M...",
+          "candidate_entities": [
+            "Grosvenor Hotel",
+            "Inspector Patterson",
+            "Mr. Holmes",
+            "Mr. Moriarty",
+            "Mr. Sherlock Holmes",
+            "Mrs. Watson",
+            "Professor Michael",
+            "Professor Moriarty",
+            "Victoria Station"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "i_silver_blaze",
+      "title": "I. Silver Blaze",
+      "author": "Arthur Conan Doyle",
+      "description": "The Project Gutenberg eBook of The Memoirs of Sherlock Holmes",
+      "format": "txt",
+      "source_type": "upload",
+      "source_url": null,
+      "status": "ready",
+      "status_message": "Candidate story graph extracted (11 characters, 5 locations) across 4 chapters.",
+      "max_chapters": 4,
+      "graph_name": "story_i_silver_blaze",
+      "created_at": "2026-10-18T16:27:54.583069+00:00",
+      "chapters": [
+        {
+          "chapter_number": 1,
+          "title": "Chapter 1",
+          "word_count": 2393,
+          "char_count": 13119,
+          "preview": "I. Silver Blaze I am afraid, Watson, that I shall have to go,\u201d said Holmes, as we sat down together to our breakfast one morning. \u201cGo! Where to?\u201d \u201cTo Dartmoor; to King\u2019s Pyland.\u201d I was not surprised....",
+          "candidate_entities": [
+            "Inspector Gregory",
+            "Lord Backwater",
+            "Mrs. Straker"
+          ]
+        },
+        {
+          "chapter_number": 2,
+          "title": "Chapter 2",
+          "word_count": 2393,
+          "char_count": 13309,
+          "preview": "curried mutton, and so deprived the stables of their watchman. \u201cAs to the missing horse, there were abundant proofs in the mud which lay at the bottom of the fatal hollow that he had been there at the...",
+          "candidate_entities": [
+            "Dr. Watson",
+            "Inspector Gregory",
+            "Mr. Holmes",
+            "Mrs. Straker"
+          ]
+        },
+        {
+          "chapter_number": 3,
+          "title": "Chapter 3",
+          "word_count": 2393,
+          "char_count": 12756,
+          "preview": "it. You wore a costume of dove-coloured silk with ostrich-feather trimming.\u201d \u201cI never had such a dress, sir,\u201d answered the lady. \u201cAh, that quite settles it,\u201d said Holmes. And with an apology he follow...",
+          "candidate_entities": [
+            "Mr. Brown",
+            "Mr. John Straker",
+            "Mr. Silas Brown"
+          ]
+        },
+        {
+          "chapter_number": 4,
+          "title": "Chapter 4",
+          "word_count": 2395,
+          "char_count": 13135,
+          "preview": "carriage one of the stable-lads held the door open for us. A sudden idea seemed to occur to Holmes, for he leaned forward and touched the lad upon the sleeve. \u201cYou have a few sheep in the paddock,\u201d he...",
+          "candidate_entities": [
+            "Dr. Watson",
+            "Lord Backwater",
+            "Lord Singleford",
+            "Mr. Heath Newton",
+            "Mr. Holmes",
+            "Mrs. Straker"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ii_the_adventure_of_the_cardboar",
+      "title": "II. The Adventure of the Cardboard Box",
+      "author": "ARTHER",
+      "description": "his talents. It is, however, unfortunately impossible entirely to",
+      "format": "txt",
+      "source_type": "upload",
+      "source_url": null,
+      "status": "ready",
+      "status_message": "Candidate story graph extracted (23 characters, 5 locations) across 4 chapters.",
+      "max_chapters": 4,
+      "graph_name": "story_ii_the_adventure_of_the_cardboar",
+      "created_at": "2026-10-18T17:10:10.061718+00:00",
+      "chapters": [
+        {
+          "chapter_number": 1,
+          "title": "Chapter 1",
+          "word_count": 2171,
+          "char_count": 11863,
+          "preview": "II. The Adventure of the Cardboard Box In choosing a few typical cases which illustrate the remarkable mental qualities of my friend, Sherlock Holmes, I have endeavoured, as far as possible, to select...",
+          "candidate_entities": [
+            "Miss Cushing",
+            "Miss Susan Cushing",
+            "Mr. Holmes",
+            "Mr. Lestrade"
+          ]
+        },
+        {
+          "chapter_number": 2,
+          "title": "Chapter 2",
+          "word_count": 2171,
+          "char_count": 11789,
+          "preview": "you make of this string, Lestrade?\u201d \u201cIt has been tarred.\u201d \u201cPrecisely. It is a piece of tarred twine. You have also, no doubt, remarked that Miss Cushing has cut the cord with a scissors, as can be see...",
+          "candidate_entities": [
+            "Miss Cushing",
+            "Miss Sarah Cushing",
+            "Mr. Browner",
+            "Mr. Holmes"
+          ]
+        },
+        {
+          "chapter_number": 3,
+          "title": "Chapter 3",
+          "word_count": 2171,
+          "char_count": 11760,
+          "preview": "was never more serious in my life. A shocking crime has been committed, and I think I have now laid bare every detail of it.\u201d \u201cAnd the criminal?\u201d Holmes scribbled a few words upon the back of one of h...",
+          "candidate_entities": [
+            "Inspector Montgomery",
+            "Miss Cushing",
+            "Miss Sarah",
+            "Miss Sarah Cushing",
+            "Mr. Holmes",
+            "Mrs. Browner",
+            "Shadwell Police Station"
+          ]
+        },
+        {
+          "chapter_number": 4,
+          "title": "Chapter 4",
+          "word_count": 2174,
+          "char_count": 10608,
+          "preview": "all her love turned to poisonous hate when she knew that I thought more of my wife\u2019s footmark in the mud than I did of her whole body and soul. \u201cThere were three sisters altogether. The old one was ju...",
+          "candidate_entities": []
+        }
+      ]
+    }
+  ]
+}

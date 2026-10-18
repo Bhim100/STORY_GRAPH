@@ -1,8 +1,18 @@
 """StoryGraph AI Agent for spoiler-aware narrative question answering."""
 from typing import Any, Dict
-from app.graph.explorer import find_connection, get_entity_profile, get_collection_query, get_event_evidence_query
+from app.graph.explorer import (
+    find_connection,
+    get_entity_profile,
+    get_collection_query,
+    get_event_evidence_query,
+    get_culprit_query,
+)
 from app.llm.interpreter import interpret_question
-from app.llm.generator import generate_grounded_answer
+from app.llm.generator import (
+    generate_grounded_answer,
+    generate_grounded_profile_answer,
+    generate_grounded_collection_answer,
+)
 from app.llm.router import route_question, QuestionType
 
 
@@ -106,8 +116,9 @@ def answer_question(question: str, chapter: int) -> Dict[str, Any]:
                     "path": None,
                 }
             node_data = profile["node"]
+            profile_answer = generate_grounded_profile_answer(profile, question, chapter)
             return {
-                "answer": profile["answer"],
+                "answer": profile_answer,
                 "status": "entity_profile",
                 "question_type": QuestionType.ENTITY_PROFILE,
                 "resolved_entities": [node_data],
@@ -124,15 +135,17 @@ def answer_question(question: str, chapter: int) -> Dict[str, Any]:
             target_entity = resolved[0] if resolved else None
             target_id = target_entity["id"] if target_entity else None
             collection_res = get_collection_query(target_id, question, chapter)
+            ans_text = generate_grounded_collection_answer(collection_res, question, chapter)
             return {
-                "answer": collection_res["answer"],
+                "answer": ans_text,
                 "status": collection_res.get("status", "collection_query"),
                 "question_type": QuestionType.COLLECTION_QUERY,
-                "resolved_entities": resolved,
+                "resolved_entities": resolved or collection_res.get("nodes", []),
                 "nodes": collection_res.get("nodes", []),
                 "relationships": collection_res.get("relationships", []),
                 "evidence": collection_res.get("evidence", []),
                 "members": collection_res.get("members", []),
+                "investigators": collection_res.get("investigators", []),
                 "path": None,
             }
 
@@ -155,47 +168,36 @@ def answer_question(question: str, chapter: int) -> Dict[str, Any]:
 
         # Culprit / Who Did It Query Handler
         if route.get("question_type") == QuestionType.CULPRIT_QUERY:
-            return {
-                "answer": (
-                    f"This question was routed to the culprit/who-did-it query handler "
-                    f"(handler is not implemented until Phase 2). "
-                    f"The culprit is not established by available graph data at Chapter {chapter}."
-                ),
-                "status": "culprit_query",
-                "question_type": QuestionType.CULPRIT_QUERY,
-                "resolved_entities": route.get("resolved_entities", []),
-                "nodes": route.get("resolved_entities", []),
-                "relationships": [],
-                "evidence": [],
-                "path": None,
-            }
+            return get_culprit_query(question, route.get("resolved_entities", []), chapter)
 
         # Two-Entity Connection Handler (Preserve existing connection route)
-        interpretation = interpret_question(question, chapter)
-        status = interpretation.get("status")
+        resolved = route.get("resolved_entities", [])
+        if len(resolved) < 2:
+            interpretation = interpret_question(question, chapter)
+            status = interpretation.get("status")
 
-        if status in ("clarification_needed", "unresolved_entity"):
-            return {
-                "answer": interpretation.get("answer", "Clarification needed to proceed."),
-                "status": status,
-                "question_type": QuestionType.CONNECTION,
-                "resolved_entities": interpretation.get("resolved_entities", []),
-                "entities": interpretation.get("entities", []),
-                "ambiguous_options": interpretation.get("ambiguous_options", []),
-                "nodes": [],
-                "relationships": [],
-                "evidence": [],
-                "path": None,
-            }
+            if status in ("clarification_needed", "unresolved_entity"):
+                return {
+                    "answer": interpretation.get("answer", "Clarification needed to proceed."),
+                    "status": status,
+                    "question_type": QuestionType.CONNECTION,
+                    "resolved_entities": interpretation.get("resolved_entities", []),
+                    "entities": interpretation.get("entities", []),
+                    "ambiguous_options": interpretation.get("ambiguous_options", []),
+                    "nodes": [],
+                    "relationships": [],
+                    "evidence": [],
+                    "path": None,
+                }
 
-        resolved = interpretation.get("resolved_entities", [])
+            resolved = interpretation.get("resolved_entities", [])
         if len(resolved) < 2:
             return {
                 "answer": "Could not identify two distinct story entities to connect in this question.",
                 "status": "clarification_needed",
                 "question_type": QuestionType.CONNECTION,
                 "resolved_entities": resolved,
-                "entities": interpretation.get("entities", []),
+                "entities": resolved,
                 "nodes": [],
                 "relationships": [],
                 "evidence": [],

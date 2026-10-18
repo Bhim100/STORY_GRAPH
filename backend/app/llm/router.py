@@ -47,10 +47,38 @@ def _load_story_dataset() -> Dict[str, Any]:
 
 
 def get_all_story_entities() -> List[Dict[str, Any]]:
-    """Returns all known story entities from the story dataset across all chapters."""
-    dataset = _load_story_dataset()
+    """Returns all known story entities from the active FalkorDB story graph or story dataset across all chapters."""
+    from app.db import get_falkordb_client, current_graph_name
+    gname = current_graph_name.get()
     entities: List[Dict[str, Any]] = []
+    try:
+        db = get_falkordb_client()
+        g = db.select_graph(gname)
+        res = g.query("MATCH (n) WHERE (n:Character OR n:Location OR n:Faction OR n:Event) RETURN n.id, coalesce(n.name, n.title), labels(n), n.reveal_chapter, coalesce(n.aliases, []), coalesce(n.role, '')")
+        for row in res.result_set:
+            nid, nname, labels, reveal_ch, aliases, role = row[0], row[1], row[2], row[3], row[4], row[5]
+            alias_list = []
+            if isinstance(aliases, list):
+                alias_list = aliases
+            elif isinstance(aliases, str):
+                try:
+                    alias_list = json.loads(aliases)
+                except Exception:
+                    alias_list = [a.strip() for a in aliases.split(",") if a.strip()]
+            entities.append({
+                "id": nid,
+                "name": nname,
+                "aliases": alias_list,
+                "labels": labels,
+                "reveal_chapter": reveal_ch if reveal_ch is not None else 1,
+                "role": role or "",
+            })
+        if entities:
+            return entities
+    except Exception:
+        pass
 
+    dataset = _load_story_dataset()
     for c in dataset.get("characters", []):
         entities.append({
             "id": c["id"],
@@ -116,6 +144,9 @@ def extract_entity_mentions(question: str, chapter: int) -> List[str]:
         "Thorne Manor", "manor", "the manor",
         "The Harbor Inn", "harbor inn", "inn",
         "the death", "death", "Elias's death", "death of Elias",
+        "John Straker's death", "Straker's death", "the death of John Straker",
+        "the disappearance", "disappearance", "Silver Blaze's disappearance", "the disappearance of Silver Blaze",
+        "Derbyshire", "William Derbyshire", "Madam Derbyshire",
         "harvest dinner", "the dinner", "dinner",
         "the quarrel", "quarrel", "the argument", "argument", "dispute",
         "the cider", "cider", "poisoned cider", "tampered cider",
@@ -154,8 +185,16 @@ def extract_entity_mentions(question: str, chapter: int) -> List[str]:
         "culprit", "the culprit", "killer", "the killer", "murderer",
         "the murderer", "perpetrator", "the perpetrator", "poisoner",
         "the poisoner", "victim", "the victim", "suspect", "the suspect",
-        "suspects", "characters", "people", "evidence", "events", "locations", "factions"
+        "suspects", "characters", "people", "evidence", "events", "locations", "factions",
+        "investigating", "the case", "case", "investigating the case",
+        "investigator", "the investigator", "investigators",
+        "detective", "the detective", "detectives", "inspector", "the inspector",
+        "lead investigator", "the lead investigator"
     }
+
+    # If the question is an investigation role query, avoid treating "investigating the case" as an entity mention
+    if any(re.search(pat, question, re.IGNORECASE) for pat in INVESTIGATION_PATTERNS):
+        return [c for c in found_mentions if c.lower() not in COMMON_NON_ENTITY_WORDS]
 
     for pat in heuristic_patterns:
         m = re.search(pat, question, re.IGNORECASE)
@@ -172,6 +211,20 @@ def extract_entity_mentions(question: str, chapter: int) -> List[str]:
 
     return found_mentions
 
+
+# Investigation role and collection patterns
+INVESTIGATION_PATTERNS = [
+    r"\bwho\s+(?:is|are|was|were)\s+investigating\b",
+    r"\bwho\s+(?:is|are|was|were)\s+(?:the\s+)?(?:lead\s+)?investigator(?:s)?\b",
+    r"\bwho\s+(?:is|are|was|were)\s+(?:the\s+)?detective(?:s)?\b",
+    r"\bwho\s+(?:is|are|was|were)\s+(?:the\s+)?inspector(?:s)?\b",
+    r"\bwho\s+investigates\b",
+    r"\bwho\s+(?:is|are|was|were)\s+(?:handling|leading|in\s+charge\s+of)\s+the\s+investigation\b",
+    r"\bwho\s+(?:is|are|was|were)\s+looking\s+after\s+the\s+case\b",
+    r"\bwho\s+(?:is|are|was|were)\s+working\s+on\s+the\s+case\b",
+    r"\bwho\s+is\s+investigating\s+(?:the\s+)?(?:case|crime|murder|disappearance|mystery|matter)\b",
+    r"\bwho\s+investigates\s+(?:the\s+)?(?:case|crime|murder|disappearance|mystery|matter)\b",
+]
 
 # Classification pattern definitions
 CULPRIT_PATTERNS = [
@@ -198,7 +251,7 @@ COLLECTION_PATTERNS = [
     r"\beveryone\s+who\b",
     r"\ball\s+(?:characters|suspects|factions|locations|events)\b",
     r"\ball\s+the\s+(?:characters|suspects|factions|locations|events)\b",
-]
+] + INVESTIGATION_PATTERNS
 
 EVENT_EVIDENCE_PATTERNS = [
     r"\bwhat\s+happened\b",
@@ -245,6 +298,10 @@ def classify_question_type(question: str, extracted_mentions: List[str]) -> str:
     """Classifies question into one of the 5 question types or unsupported."""
     q_clean = question.strip()
 
+    # 0. Clue / Alias inquiries (e.g. "What was Holmes's explanation of the Derbyshire name?")
+    if "derbyshire" in q_clean.lower():
+        return QuestionType.EVENT_EVIDENCE
+
     # 1. Culprit / Who did it queries take precedence
     for pat in CULPRIT_PATTERNS:
         if re.search(pat, q_clean, re.IGNORECASE):
@@ -280,7 +337,10 @@ def classify_question_type(question: str, extracted_mentions: List[str]) -> str:
         return QuestionType.ENTITY_PROFILE
 
     # 6. Fallback check: If no entities were extracted and no narrative mystery words match
-    story_keywords = ["thorne", "voss", "halden", "reed", "quill", "calloway", "ames", "orchard", "greenhouse", "ledger", "cider", "murder", "poison", "will"]
+    story_keywords = [
+        "thorne", "voss", "halden", "reed", "quill", "calloway", "ames", "orchard", "greenhouse", "ledger", "cider", "murder", "poison", "will",
+        "silver blaze", "blaze", "straker", "ross", "gregory", "simpson", "derbyshire", "silas", "brown", "hunter", "baxter", "dartmoor", "wessex", "cup", "pyland", "moor"
+    ]
     if not any(k in q_clean.lower() for k in story_keywords):
         return QuestionType.UNSUPPORTED
 
@@ -350,13 +410,13 @@ def route_question(question: str, chapter: int) -> Dict[str, Any]:
 
     # Unresolved / hidden entity check (e.g., entity revealed in a future chapter)
     if unresolved:
-        if q_type == QuestionType.CULPRIT_QUERY:
+        if q_type == QuestionType.CULPRIT_QUERY or (q_type == QuestionType.COLLECTION_QUERY and any(re.search(pat, question, re.IGNORECASE) for pat in INVESTIGATION_PATTERNS)):
             return {
                 "question_type": q_type,
                 "status": "ok",
                 "resolved_entities": resolved,
                 "ambiguous_options": [],
-                "unresolved_entities": unresolved,
+                "unresolved_entities": [],
                 "answer": "",
             }
         unresolved_str = " and ".join(f"'{u}'" for u in unresolved)

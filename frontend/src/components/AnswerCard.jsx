@@ -12,6 +12,7 @@ import {
   Calendar,
   ShieldAlert,
 } from 'lucide-react';
+import { FormattedAnswer } from './FormattedAnswer';
 
 export function AnswerCard({ result, onDismiss, onSelectNode }) {
   if (!result) return null;
@@ -176,9 +177,7 @@ export function AnswerCard({ result, onDismiss, onSelectNode }) {
       )}
 
       {/* Answer Explanation */}
-      <div style={{ fontSize: '0.85rem', color: 'var(--text-ivory-primary)', lineHeight: 1.5 }}>
-        {answer}
-      </div>
+      <FormattedAnswer text={answer} />
 
       {/* Supporting Evidence Records */}
       {evidence.length > 0 && (

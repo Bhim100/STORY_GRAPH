@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Sparkles, Loader2, CornerDownLeft } from 'lucide-react';
+import { Search, Loader2, CornerDownLeft } from 'lucide-react';
 import { AnswerCard } from './AnswerCard';
 
 export function QuestionPanel({
@@ -34,15 +34,6 @@ export function QuestionPanel({
     onAskQuestion(question.trim());
   };
 
-  const sampleQuestions = [
-    'What happened at the greenhouse?',
-    'Why was Jonas suspected?',
-    'What evidence connects Halden to the death?',
-    'How are Mara Voss and Jonas Reed connected?',
-    'Tell me about Mara Voss',
-    'Who is in the Thorne household?',
-  ];
-
   const handleSelectDisambiguation = (entityName) => {
     // Replace ambiguous mention with chosen name
     const updated = `How is ${entityName} connected to the story?`;
@@ -70,7 +61,7 @@ export function QuestionPanel({
             id="narrative-question-input"
             type="text"
             className="input-text"
-            placeholder="e.g. How are Mara Voss and Dr. Halden connected?"
+            placeholder="Ask questions about the script, characters, clues, or plot..."
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             disabled={loading}
@@ -85,36 +76,6 @@ export function QuestionPanel({
             {loading ? <Loader2 size={15} className="animate-spin" /> : <CornerDownLeft size={15} />}
             Investigate
           </button>
-        </div>
-
-        {/* Quick query chips */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.65rem', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-ivory-muted)', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-            <Sparkles size={11} color="var(--accent-amber)" />
-            Suggestions:
-          </span>
-          {sampleQuestions.map((q, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => {
-                setQuestion(q);
-                onAskQuestion(q);
-              }}
-              style={{
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '0.15rem 0.45rem',
-                fontSize: '0.7rem',
-                color: 'var(--text-ivory-secondary)',
-                cursor: 'pointer',
-                textAlign: 'left',
-              }}
-            >
-              {q}
-            </button>
-          ))}
         </div>
       </form>
 
