@@ -276,7 +276,7 @@ CONNECTION_PATTERNS = [
     r"\blink\s+between\s+(.+?)\s+and\s+(.+?)\b",
     r"\bhow\s+do\s+(.+?)\s+and\s+(.+?)\s+know\s+each\s+other\b",
     r"\bconnect(?:ion)?\s+between\s+(.+?)\s+and\s+(.+?)\b",
-    r"\bis\s+(.+?)\s+connected\s+to\s+(.+?)\b",
+    r"\bis\s+(.+?)\s+connected\s+to\s+(?!the\s+(?:story|case|plot|narrative|mystery|events))(.+?)\b",
     r"\bexplain\s+the\s+link\s+between\s+(.+?)\s+and\s+(.+?)\b",
     r"\bexplain\s+how\s+(.+?)\s+(?:and|is\s+connected\s+to)\s+(.+?)\b",
 ]
@@ -291,6 +291,7 @@ PROFILE_PATTERNS = [
     r"\bwhat\s+is\s+(.+?)'s\s+(?:role|background|story)\b",
     r"\bdetails\s+(?:about|on)\s+(.+?)(?:\?|$|\.)",
     r"\bhow\s+is\s+(.+?)\s+connected\s+to\s+the\s+story\b",
+    r"\bhow\s+is\s+(.+?)\s+(?:connected|involved|related)\s+to\s+(?:the\s+)?(?:story|case|plot|narrative|events|mystery)\b",
 ]
 
 
@@ -317,7 +318,12 @@ def classify_question_type(question: str, extracted_mentions: List[str]) -> str:
         if re.search(pat, q_clean, re.IGNORECASE):
             return QuestionType.EVENT_EVIDENCE
 
-    # 4. Connection queries
+    # 4. Entity profile queries (evaluated before connection to correctly capture "How is X connected to the story?")
+    for pat in PROFILE_PATTERNS:
+        if re.search(pat, q_clean, re.IGNORECASE):
+            return QuestionType.ENTITY_PROFILE
+
+    # 5. Connection queries between two entities
     for pat in CONNECTION_PATTERNS:
         if re.search(pat, q_clean, re.IGNORECASE):
             return QuestionType.CONNECTION
@@ -326,11 +332,6 @@ def classify_question_type(question: str, extracted_mentions: List[str]) -> str:
         # Relational check
         if any(w in q_clean.lower() for w in ["connect", "relation", "link", "between", "know", "with", "and"]):
             return QuestionType.CONNECTION
-
-    # 5. Entity profile queries
-    for pat in PROFILE_PATTERNS:
-        if re.search(pat, q_clean, re.IGNORECASE):
-            return QuestionType.ENTITY_PROFILE
 
     if len(extracted_mentions) == 1:
         # Single entity query with descriptive or profile intent

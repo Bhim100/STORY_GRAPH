@@ -51,6 +51,12 @@ def test_route_entity_profile_query():
     assert r4["question_type"] == QuestionType.ENTITY_PROFILE
     assert r4["status"] == "ok"
 
+    # UI 'Ask about this entity' click action phrasing
+    r5 = route_question("How is Tobias Quill connected to the story?", chapter=8)
+    assert r5["question_type"] == QuestionType.ENTITY_PROFILE
+    assert r5["status"] == "ok"
+    assert r5["resolved_entities"][0]["id"] == "c_tobias_quill"
+
 
 @requires_falkordb
 def test_route_collection_query():
